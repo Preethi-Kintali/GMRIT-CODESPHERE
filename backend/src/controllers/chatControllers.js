@@ -12,6 +12,6 @@ export async function getStreamToken(req, res) {
     });
   } catch (error) {
     console.log("Error in getStreamToken controller:", error.message);
-    res.status(500).json({ msg: "Internal Server Error" });
+    res.status(500).json({ message: "Internal Server Error" });
   }
 }
