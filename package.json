@@ -11,6 +11,9 @@
     "type": "git",
     "url": "git+https://github.com/DineshJammu/GMRIT-CODESPHERE.git"
   },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
