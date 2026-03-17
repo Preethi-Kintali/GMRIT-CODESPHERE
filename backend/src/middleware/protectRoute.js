@@ -1,4 +1,4 @@
-import { requireAuth, getAuth } from "@clerk/express";
+import { requireAuth, clerkClient } from "@clerk/express";
 import User from "../models/User.js";
 
 export const protectRoute = [
@@ -10,8 +10,19 @@ export const protectRoute = [
         return res.status(401).json({ message: "Unauthorized - invalid token" });
 
       //   find user in db by clerk Id
-      const user = await User.findOne({ clerkId });
-      if (!user) return res.status(404).json({ message: "User not found" });
+      let user = await User.findOne({ clerkId });
+      
+      // Auto-sync user if they are missing in the DB but authenticated via Clerk
+      // This fixes vanished users if the DB was wiped or webhook failed.
+      if (!user) {
+        const clerkUser = await clerkClient.users.getUser(clerkId);
+        user = await User.create({
+          clerkId,
+          email: clerkUser.emailAddresses?.[0]?.emailAddress || "",
+          name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || "User",
+          profileImage: clerkUser.imageUrl || "",
+        });
+      }
 
       //   attach user to req
       req.user = user;
