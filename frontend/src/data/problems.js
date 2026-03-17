@@ -67,7 +67,7 @@ class Solution {
 }`,
     },
     expectedOutput: {
-      javascript: "[0,1]\n[1,2]\n[0,1]",
+      javascript: "[ 0, 1 ]\n[ 1, 2 ]\n[ 0, 1 ]",
       python: "[0, 1]\n[1, 2]\n[0, 1]",
       java: "[0, 1]\n[1, 2]\n[0, 1]",
     },
@@ -141,7 +141,7 @@ class Solution {
 }`,
     },
     expectedOutput: {
-      javascript: '["o","l","l","e","h"]\n["h","a","n","n","a","H"]',
+      javascript: "[ 'o', 'l', 'l', 'e', 'h' ]\n[ 'h', 'a', 'n', 'n', 'a', 'H' ]",
       python: "['o', 'l', 'l', 'e', 'h']\n['h', 'a', 'n', 'n', 'a', 'H']",
       java: "[o, l, l, e, h]\n[h, a, n, n, a, H]",
     },
