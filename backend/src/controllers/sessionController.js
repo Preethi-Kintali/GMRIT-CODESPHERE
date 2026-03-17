@@ -37,12 +37,13 @@ export async function createSession(req, res) {
     });
 
     // chat messaging
-    chatClient.channel("messaging", callId, {
+
+
+    const channel = chatClient.channel("messaging", callId, {
       name: `${problem} Session`,
       created_by_id: clerkId,
       members: [clerkId],
     });
-
     await channel.create();
 
     res.status(201).json({ session });
@@ -70,7 +71,7 @@ export async function getMyRecentSessions(req, res) {
   try {
     const userId = req.user._id;
     // get sessions where user is either host or participant
-    await Session.find({
+    const sessions = await Session.find({
       status: "completed",
       $or: [{ host: userId }, { participant: userId }],
     })
@@ -89,7 +90,7 @@ export async function getSessionById(req, res) {
     const { id } = req.params;
     const session = await Session.findById(id)
       .populate("host", "name email profileImage clerkId")
-      .populate("paricipant", "name email profileImage clerkId");
+      .populate("participant", "name email profileImage clerkId");
 
     if (!session) return res.status(404).json({ message: "Session not found" });
     res.status(200).json({ session });
@@ -121,10 +122,10 @@ export async function joinSession(req, res) {
     }
 
     // check if session is already full - has a participant
-    if (Session.participant)
+    if (session.participant)
       return res.status(409).json({ message: "Session is full" });
-    Session.participant = userId;
-    await Session.Save();
+    session.participant = userId;
+    await session.save();
 
     const channel = chatClient.channel("messaging", session.callId);
     await channel.addMembers([clerkId]);
@@ -161,7 +162,7 @@ export async function endSession(req, res) {
     await call.delete({ hard: true });
 
     // delete stream chat channel
-    const channel = chatClient.channel("messaging", session.clerkId);
+    const channel = chatClient.channel("messaging", session.callId);
     await channel.delete();
 
     session.status = "completed";

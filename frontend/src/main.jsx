@@ -14,6 +14,7 @@ if (!PUBLISHABLE_KEY) {
 }
 
 const queryClient = new QueryClient();
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
