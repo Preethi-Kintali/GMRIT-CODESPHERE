@@ -1,7 +1,9 @@
 import "./lib/setup.js";
 import "./cron/reminders.js";
 import express from "express";
+import http from "http";
 import path from "path";
+import { Server } from "socket.io";
 import cors from "cors";
 import { serve } from "inngest/express";
 import { clerkMiddleware } from "@clerk/express";
@@ -19,6 +21,39 @@ import problemRoutes from "./routes/problemRoutes.js";
 
 const PORT = ENV.PORT;
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ENV.CLIENT_URL || "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
+  }
+});
+
+io.on("connection", (socket) => {
+  console.log("User connected to socket:", socket.id);
+
+  socket.on("join_session", (sessionId) => {
+    socket.join(sessionId);
+  });
+
+  socket.on("code_sync", ({ sessionId, code, language }) => {
+    socket.to(sessionId).emit("code_sync", { code, language });
+  });
+
+  socket.on("execution_start", ({ sessionId }) => {
+    socket.to(sessionId).emit("execution_start");
+  });
+
+  socket.on("execution_result", ({ sessionId, output }) => {
+    socket.to(sessionId).emit("execution_result", { output });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
+
 const __dirname = path.resolve();
 
 // webhooks must be parsed as raw body
@@ -53,7 +88,7 @@ if (ENV.NODE_ENV === "production") {
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`server is running on port ${PORT}`);
     });
   } catch (error) {

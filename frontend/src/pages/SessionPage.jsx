@@ -1,6 +1,7 @@
 import { useUser } from "@clerk/clerk-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
+import { io } from "socket.io-client";
 import { useEndSession, useJoinSession, useSessionById } from "../hooks/useSessions";
 import { PROBLEMS } from "../data/problems";
 import { executeCode } from "../lib/piston";
@@ -37,6 +38,7 @@ function SessionPage() {
 
   // Guard to prevent duplicate join calls (React StrictMode mounts effects twice in dev)
   const hasJoinedRef = useRef(false);
+  const socketRef = useRef(null);
 
   // Note: we let streamClient hook know the roles as well
   const { call, channel, chatClient, isInitializingCall, streamClient } = useStreamClient(
@@ -81,6 +83,46 @@ function SessionPage() {
     }
   }, [problemData, selectedLanguage]);
 
+  // sync incoming code changes via Socket.io
+  useEffect(() => {
+    if (!session || !user || loadingSession) return;
+    
+    const backendUrl = import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
+    socketRef.current = io(backendUrl);
+    socketRef.current.emit("join_session", id);
+
+    socketRef.current.on("code_sync", (data) => {
+      if (data.code !== undefined) setCode(data.code);
+      if (data.language !== undefined) setSelectedLanguage(data.language);
+    });
+
+    socketRef.current.on("execution_start", () => {
+      setIsRunning(true);
+      setOutput(null);
+    });
+
+    socketRef.current.on("execution_result", ({ output }) => {
+      setOutput(output);
+      setIsRunning(false);
+    });
+
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+    };
+  }, [session, user, loadingSession, id]);
+
+  const handleCodeChange = (value) => {
+    setCode(value);
+    
+    if (socketRef.current) {
+      socketRef.current.emit("code_sync", {
+        sessionId: id,
+        code: value,
+        language: selectedLanguage
+      });
+    }
+  };
+
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     setSelectedLanguage(newLang);
@@ -88,21 +130,37 @@ function SessionPage() {
     const starterCode = problemData?.starterCode?.[newLang] || "";
     setCode(starterCode);
     setOutput(null);
+
+    if (socketRef.current) {
+      socketRef.current.emit("code_sync", {
+        sessionId: id,
+        code: starterCode,
+        language: newLang
+      });
+    }
   };
 
   const handleRunCode = async () => {
     setIsRunning(true);
     setOutput(null);
 
+    if (socketRef.current) {
+      socketRef.current.emit("execution_start", { sessionId: id });
+    }
+
     const result = await executeCode(selectedLanguage, code);
     setOutput(result);
     setIsRunning(false);
+
+    if (socketRef.current) {
+      socketRef.current.emit("execution_result", { sessionId: id, output: result });
+    }
   };
 
   const handleEndSession = () => {
     if (confirm("Are you sure you want to end this session? All participants will be notified.")) {
       // this will navigate the Interviewer to the feedback page
-      endSessionMutation.mutate(id, { onSuccess: () => navigate(`/session/\${id}/feedback`) });
+      endSessionMutation.mutate(id, { onSuccess: () => navigate(`/session/${id}/feedback`) });
     }
   };
 
@@ -267,7 +325,7 @@ function SessionPage() {
                   code={code}
                   isRunning={isRunning}
                   onLanguageChange={handleLanguageChange}
-                  onCodeChange={(value) => setCode(value)}
+                  onCodeChange={handleCodeChange}
                   onRunCode={handleRunCode}
                 />
               </Panel>
