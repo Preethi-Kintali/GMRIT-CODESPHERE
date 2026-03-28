@@ -7,19 +7,28 @@ import DashboardPage from "./pages/DashboardPage";
 import ProblemPage from "./pages/ProblemPage";
 import ProblemsPage from "./pages/ProblemsPage";
 import SessionPage from "./pages/SessionPage";
+import AdminRoute from "./components/AdminRoute";
+import AdminLayout from "./components/AdminLayout";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
+import InterviewerManagementPage from "./pages/InterviewerManagementPage";
+import ProblemEditorPage from "./pages/ProblemEditorPage";
+import CreateSessionPage from "./pages/CreateSessionPage";
+import FeedbackPage from "./pages/FeedbackPage";
 
 function App() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded, user } = useUser();
 
   // this will get rid of the flickering effect
   if (!isLoaded) return null;
+
+  const isAdmin = user?.publicMetadata?.role === "admin";
 
   return (
     <>
       <Routes>
         <Route
           path="/"
-          element={!isSignedIn ? <HomePage /> : <Navigate to={"/dashboard"} />}
+          element={!isSignedIn ? <HomePage /> : <Navigate to={isAdmin ? "/admin" : "/dashboard"} />}
         />
         <Route
           path="/dashboard"
@@ -37,6 +46,52 @@ function App() {
         <Route
           path="/session/:id"
           element={isSignedIn ? <SessionPage /> : <Navigate to={"/"} />}
+        />
+        <Route
+          path="/session/:id/feedback"
+          element={isSignedIn ? <FeedbackPage /> : <Navigate to={"/"} />}
+        />
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <AdminDashboardPage />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/sessions/create"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <CreateSessionPage />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/interviewers"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <InterviewerManagementPage />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/problems/new"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <ProblemEditorPage />
+              </AdminLayout>
+            </AdminRoute>
+          }
         />
       </Routes>
 

@@ -1,13 +1,13 @@
 import { useUser } from "@clerk/clerk-react";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useEndSession, useJoinSession, useSessionById } from "../hooks/useSessions";
 import { PROBLEMS } from "../data/problems";
 import { executeCode } from "../lib/piston";
 import Navbar from "../components/Navbar";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { getDifficultyBadgeClass } from "../lib/utils";
-import { Loader2Icon, LogOutIcon, PhoneOffIcon, BookTextIcon, FileTextIcon, Code2Icon, GripVerticalIcon, GripHorizontalIcon, UsersIcon } from "lucide-react";
+import { Loader2Icon, LogOutIcon, PhoneOffIcon, BookTextIcon, FileTextIcon, Code2Icon, GripVerticalIcon, GripHorizontalIcon, UsersIcon, CopyIcon, CheckIcon } from "lucide-react";
 import CodeEditorPanel from "../components/CodeEditorPanel";
 import OutputPanel from "../components/OutputPanel";
 
@@ -19,8 +19,12 @@ function SessionPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useUser();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token") || "";
+
   const [output, setOutput] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   const { data: sessionData, isLoading: loadingSession, refetch } = useSessionById(id);
 
@@ -28,40 +32,42 @@ function SessionPage() {
   const endSessionMutation = useEndSession();
 
   const session = sessionData?.session;
-  const isHost = session?.host?.clerkId === user?.id;
-  const isParticipant = session?.participant?.clerkId === user?.id;
+  const isInterviewer = session?.interviewer?.clerkId === user?.id;
+  const isCandidate = session?.candidate?.clerkId === user?.id;
 
   // Guard to prevent duplicate join calls (React StrictMode mounts effects twice in dev)
   const hasJoinedRef = useRef(false);
 
+  // Note: we let streamClient hook know the roles as well
   const { call, channel, chatClient, isInitializingCall, streamClient } = useStreamClient(
     session,
     loadingSession,
-    isHost,
-    isParticipant
+    isInterviewer,
+    isCandidate
   );
 
-  // find the problem data based on session problem title
+  // find the problem data based on session problem ID (from backend problem population)
+  // Backend populates session.problem with { _id, title, ... }
   const problemData = session?.problem
-    ? Object.values(PROBLEMS).find((p) => p.title === session.problem)
+    ? Object.values(PROBLEMS).find((p) => p.title === session.problem.title)
     : null;
 
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [code, setCode] = useState(problemData?.starterCode?.[selectedLanguage] || "");
 
-  // auto-join session if user is not already a participant and not the host
+  // auto-join session based on token
   useEffect(() => {
     if (!session || !user || loadingSession) return;
-    if (isHost || isParticipant) return;
     if (hasJoinedRef.current) return; // idempotency guard
 
-    hasJoinedRef.current = true;
-    joinSessionMutation.mutate(id, { onSuccess: refetch });
+    // the host check previously bypass join, but now both parties MUST join to activate schedule -> active state!
+    if (token) {
+      hasJoinedRef.current = true;
+      joinSessionMutation.mutate({ id, token }, { onSuccess: refetch });
+    }
+  }, [session, user, loadingSession, id, token]);
 
-    // remove the joinSessionMutation, refetch from dependencies to avoid infinite loop
-  }, [session, user, loadingSession, isHost, isParticipant, id]);
-
-  // redirect the "participant" when session ends
+  // redirect the "candidate" when session ends
   useEffect(() => {
     if (!session || loadingSession) return;
 
@@ -95,8 +101,8 @@ function SessionPage() {
 
   const handleEndSession = () => {
     if (confirm("Are you sure you want to end this session? All participants will be notified.")) {
-      // this will navigate the HOST to dashboard
-      endSessionMutation.mutate(id, { onSuccess: () => navigate("/dashboard") });
+      // this will navigate the Interviewer to the feedback page
+      endSessionMutation.mutate(id, { onSuccess: () => navigate(`/session/\${id}/feedback`) });
     }
   };
 
@@ -116,40 +122,52 @@ function SessionPage() {
                   <span className="text-xs font-semibold text-neutral-300">Session Problem</span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="px-2 py-1 bg-white/5 rounded flex items-center gap-2 border border-white/10">
-                    <UsersIcon className="size-3 text-neutral-400" />
-                    <span className="text-[10px] font-medium text-neutral-300 uppercase tracking-wider">
-                      {session?.participant ? 2 : 1}/2
-                    </span>
-                  </div>
-
-                  {isHost && session?.status === "active" && (
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={handleEndSession}
-                      disabled={endSessionMutation.isPending}
-                      className="px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded flex items-center gap-1.5 transition-colors disabled:opacity-50 text-[10px] uppercase font-semibold tracking-wider"
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        setIsCopied(true);
+                        setTimeout(() => setIsCopied(false), 2000);
+                      }}
+                      className="px-2 py-1 bg-white/5 hover:bg-white/10 rounded flex items-center gap-1.5 border border-white/10 transition-colors text-[10px] uppercase font-semibold tracking-wider text-neutral-300"
                     >
-                      {endSessionMutation.isPending ? (
-                        <Loader2Icon className="size-3 animate-spin" />
-                      ) : (
-                        <LogOutIcon className="size-3" />
-                      )}
-                      End
+                      {isCopied ? <CheckIcon className="size-3 text-emerald-400" /> : <CopyIcon className="size-3" />}
+                      Link
                     </button>
-                  )}
-                </div>
+
+                    <div className="px-2 py-1 bg-white/5 rounded flex items-center gap-2 border border-white/10">
+                      <UsersIcon className="size-3 text-neutral-400" />
+                      <span className="text-[10px] font-medium text-neutral-300 uppercase tracking-wider">
+                        2/2
+                      </span>
+                    </div>
+
+                    {isInterviewer && session?.status === "active" && (
+                      <button
+                        onClick={handleEndSession}
+                        disabled={endSessionMutation.isPending}
+                        className="px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded flex items-center gap-1.5 transition-colors disabled:opacity-50 text-[10px] uppercase font-semibold tracking-wider"
+                      >
+                        {endSessionMutation.isPending ? (
+                          <Loader2Icon className="size-3 animate-spin" />
+                        ) : (
+                          <LogOutIcon className="size-3" />
+                        )}
+                        End
+                      </button>
+                    )}
+                  </div>
               </div>
 
               <div className="p-6 space-y-8 pb-10">
                 {/* TITLE & META */}
                 <div>
                   <h1 className="text-2xl font-semibold text-white tracking-tight mb-4">
-                    {session?.problem || "Loading..."}
+                    {session?.problem?.title || "Loading..."}
                   </h1>
                   <div className="flex items-center gap-3">
-                    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ${getDifficultyBadgeClass(session?.difficulty)}`}>
-                      {session?.difficulty.slice(0, 1).toUpperCase() + session?.difficulty.slice(1) || "Easy"}
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ${getDifficultyBadgeClass(session?.problem?.difficulty)}`}>
+                      {session?.problem?.difficulty ? session.problem.difficulty.slice(0, 1).toUpperCase() + session.problem.difficulty.slice(1) : "Easy"}
                     </span>
                     {problemData?.category && (
                       <span className="text-xs text-neutral-500 font-medium px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
@@ -280,6 +298,16 @@ function SessionPage() {
                   <div className="text-center">
                     <Loader2Icon className="size-8 mx-auto animate-spin text-emerald-400 mb-4" />
                     <p className="text-neutral-400 text-sm font-medium">Connecting to channel...</p>
+                  </div>
+                </div>
+              ) : !isInterviewer && !isCandidate ? (
+                <div className="h-full flex items-center justify-center p-4">
+                  <div className="bg-black/40 rounded-xl p-6 border border-yellow-500/20 max-w-sm w-full text-center">
+                    <div className="size-16 bg-yellow-500/10 rounded-full flex items-center justify-center mb-4 mx-auto">
+                      <PhoneOffIcon className="size-8 text-yellow-500" />
+                    </div>
+                    <h2 className="text-lg font-semibold text-white mb-2">Spectator Restricted</h2>
+                    <p className="text-neutral-400 text-sm">Admins are not permitted to silently spectate active interviews! Please login as the scheduled Interviewer or Candidate.</p>
                   </div>
                 </div>
               ) : !streamClient || !call ? (

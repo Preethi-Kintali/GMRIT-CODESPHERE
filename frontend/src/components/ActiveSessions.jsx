@@ -51,48 +51,37 @@ function ActiveSessions({ sessions, isLoading, isUserInSession }) {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-1.5">
-                      <h3 className="font-medium text-white text-base truncate">{session.problem}</h3>
+                      <h3 className="font-medium text-white text-base truncate">{session.problem?.title}</h3>
                       <span
                         className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${getDifficultyBadgeClass(
-                          session.difficulty
+                          session.problem?.difficulty || 'easy'
                         )}`}
                       >
-                        {session.difficulty}
+                        {session.problem?.difficulty || 'easy'}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-4 text-xs text-neutral-500">
                       <div className="flex items-center gap-1.5">
                         <CrownIcon className="size-3.5" />
-                        <span className="font-medium text-neutral-400">{session.host?.name}</span>
+                        <span className="font-medium text-neutral-400">{session.interviewer?.name}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <UsersIcon className="size-3.5" />
-                        <span>{session.participant ? "2/2" : "1/2"}</span>
+                        <span>2/2</span>
                       </div>
-                      {session.participant && !isUserInSession(session) ? (
-                        <span className="text-[10px] font-semibold text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Full</span>
-                      ) : (
-                        <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Open</span>
-                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* RIGHT SIDE BTN */}
-                {session.participant && !isUserInSession(session) ? (
-                  <button className="px-4 py-2 text-xs font-medium rounded-md bg-white/5 text-neutral-500 cursor-not-allowed border border-white/5 shrink-0">
-                    Room Full
-                  </button>
-                ) : (
-                  <Link
-                    to={`/session/${session._id}`}
-                    className="px-4 py-2 text-xs font-medium rounded-md bg-white text-black hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2 shrink-0"
-                  >
-                    {isUserInSession(session) ? "Rejoin" : "Join"}
-                    <ArrowRightIcon className="size-3" />
-                  </Link>
-                )}
+                <Link
+                  to={`/session/${session._id}`}
+                  className="px-4 py-2 text-xs font-medium rounded-md bg-white text-black hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2 shrink-0"
+                >
+                  {session.status === "active" ? "Join" : "View Details"}
+                  <ArrowRightIcon className="size-3" />
+                </Link>
               </div>
             </div>
           ))

@@ -14,14 +14,21 @@
   "license": "ISC",
   "dependencies": {
     "@clerk/express": "^1.7.41",
+    "@react-email/components": "^1.0.10",
     "@stream-io/node-sdk": "^0.7.12",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "gmrit-codesphere": "file:..",
-    "inngest": "^3.44.3",
+    "inngest": "^3.44.4",
     "mongoose": "^8.19.1",
-    "stream-chat": "^9.24.0"
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "resend": "^6.9.4",
+    "stream-chat": "^9.24.0",
+    "svix": "^1.89.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

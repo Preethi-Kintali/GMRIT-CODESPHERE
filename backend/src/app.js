@@ -1,4 +1,5 @@
 import "./lib/setup.js";
+import "./cron/reminders.js";
 import express from "express";
 import path from "path";
 import cors from "cors";
@@ -10,11 +11,18 @@ import { connectDB } from "./lib/db.js";
 import { inngest, functions } from "./lib/inngest.js";
 import { protectRoute } from "./middleware/protectRoute.js";
 import chatRoutes from "./routes/chatRoutes.js";
-import sessionRoutes from "./routes/sessionRoutes.js"
+import sessionRoutes from "./routes/sessionRoutes.js";
+import executeRoutes from "./routes/executeRoutes.js";
+import webhookRoutes from "./routes/webhookRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import problemRoutes from "./routes/problemRoutes.js";
 
 const PORT = ENV.PORT;
 const app = express();
 const __dirname = path.resolve();
+
+// webhooks must be parsed as raw body
+app.use("/api/webhooks", webhookRoutes);
 
 // middlewares
 app.use(express.json());
@@ -25,6 +33,9 @@ app.use(clerkMiddleware()); // this add auth field to requesr object: req.auth()
 app.use("/api/inngest", serve({ client: inngest, functions }));
 app.use("/api/chat", chatRoutes);
 app.use("/api/sessions", sessionRoutes);
+app.use("/api/execute", executeRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/problems", protectRoute, problemRoutes);
 
 app.get("/health", (req, res) => {
   res.status(200).json({ message: "api is up and running" });
@@ -34,7 +45,7 @@ app.get("/health", (req, res) => {
 if (ENV.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-  app.get("/{*any}", (req, res) => {
+  app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
   });
 }
