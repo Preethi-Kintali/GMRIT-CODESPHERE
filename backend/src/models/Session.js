@@ -2,41 +2,49 @@ import mongoose from "mongoose";
 
 const sessionSchema = new mongoose.Schema(
   {
+    interviewer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    candidate: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     problem: {
-      type: String,
-      required: true,
-    },
-    difficulty: {
-      type: String,
-      enum: ["easy", "medium", "hard"],
-      required: true,
-    },
-    host: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Problem",
       required: true,
     },
-    participant: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
+    scheduledAt: {
+      type: Date,
+      required: true, // scheduled start time
+    },
+    duration: {
+      type: Number,
+      required: true, // in minutes
     },
     status: {
       type: String,
-      enum: ["active", "completed"],
-      default: "active",
+      enum: ["scheduled", "active", "completed", "cancelled"],
+      default: "scheduled",
     },
-    // stream video call ID
     callId: {
       type: String,
       default: "",
     },
+    interviewerToken: { type: String, required: true },
+    candidateToken: { type: String, required: true },
+    feedback: {
+      rating: { type: Number, min: 1, max: 5 },
+      notes: { type: String },
+      recommendation: { type: String, enum: ["hire", "consider", "reject"] },
+    },
   },
   {
-    timestamps: true, // createdAt, updatedAt
-  },
+    timestamps: true,
+  }
 );
 
-const Session = mongoose.model("Session", sessionSchema);
-
-export default Session;
+export default mongoose.model("Session", sessionSchema);

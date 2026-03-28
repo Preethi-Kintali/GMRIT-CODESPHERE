@@ -1,5 +1,5 @@
 import Editor from "@monaco-editor/react";
-import { Loader2Icon, PlayIcon, Code2Icon, ChevronDownIcon } from "lucide-react";
+import { Loader2Icon, PlayIcon, Code2Icon, ChevronDownIcon, RotateCcwIcon } from "lucide-react";
 import { LANGUAGE_CONFIG } from "../data/problems";
 import { useState, useRef, useEffect } from "react";
 
@@ -10,6 +10,7 @@ function CodeEditorPanel({
   onLanguageChange,
   onCodeChange,
   onRunCode,
+  onReset,
 }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -87,23 +88,32 @@ function CodeEditorPanel({
           </div>
         </div>
 
-        <button
-          className="px-4 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-md flex items-center gap-2 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={isRunning}
-          onClick={onRunCode}
-        >
-          {isRunning ? (
-            <>
-              <Loader2Icon className="size-3.5 animate-spin" />
-              Running...
-            </>
-          ) : (
-            <>
-              <PlayIcon className="size-3.5" />
-              Run Code
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            className="px-4 py-1.5 bg-neutral-500/10 hover:bg-neutral-500/20 text-neutral-400 border border-neutral-500/20 rounded-md flex items-center gap-2 text-xs font-medium transition-colors"
+            onClick={onReset}
+          >
+            <RotateCcwIcon className="size-3.5" />
+            Reset
+          </button>
+          <button
+            className="px-4 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-md flex items-center gap-2 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isRunning}
+            onClick={onRunCode}
+          >
+            {isRunning ? (
+              <>
+                <Loader2Icon className="size-3.5 animate-spin" />
+                Running...
+              </>
+            ) : (
+              <>
+                <PlayIcon className="size-3.5" />
+                Run Code
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* EDITOR */}

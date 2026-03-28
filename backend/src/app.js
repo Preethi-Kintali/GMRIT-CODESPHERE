@@ -1,6 +1,9 @@
 import "./lib/setup.js";
+import "./cron/reminders.js";
 import express from "express";
+import http from "http";
 import path from "path";
+import { Server } from "socket.io";
 import cors from "cors";
 import { serve } from "inngest/express";
 import { clerkMiddleware } from "@clerk/express";
@@ -10,11 +13,51 @@ import { connectDB } from "./lib/db.js";
 import { inngest, functions } from "./lib/inngest.js";
 import { protectRoute } from "./middleware/protectRoute.js";
 import chatRoutes from "./routes/chatRoutes.js";
-import sessionRoutes from "./routes/sessionRoutes.js"
+import sessionRoutes from "./routes/sessionRoutes.js";
+import executeRoutes from "./routes/executeRoutes.js";
+import webhookRoutes from "./routes/webhookRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import problemRoutes from "./routes/problemRoutes.js";
 
 const PORT = ENV.PORT;
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ENV.CLIENT_URL || "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
+  }
+});
+
+io.on("connection", (socket) => {
+  console.log("User connected to socket:", socket.id);
+
+  socket.on("join_session", (sessionId) => {
+    socket.join(sessionId);
+  });
+
+  socket.on("code_sync", ({ sessionId, code, language }) => {
+    socket.to(sessionId).emit("code_sync", { code, language });
+  });
+
+  socket.on("execution_start", ({ sessionId }) => {
+    socket.to(sessionId).emit("execution_start");
+  });
+
+  socket.on("execution_result", ({ sessionId, output }) => {
+    socket.to(sessionId).emit("execution_result", { output });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
+
 const __dirname = path.resolve();
+
+// webhooks must be parsed as raw body
+app.use("/api/webhooks", webhookRoutes);
 
 // middlewares
 app.use(express.json());
@@ -25,6 +68,9 @@ app.use(clerkMiddleware()); // this add auth field to requesr object: req.auth()
 app.use("/api/inngest", serve({ client: inngest, functions }));
 app.use("/api/chat", chatRoutes);
 app.use("/api/sessions", sessionRoutes);
+app.use("/api/execute", executeRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/problems", protectRoute, problemRoutes);
 
 app.get("/health", (req, res) => {
   res.status(200).json({ message: "api is up and running" });
@@ -34,7 +80,7 @@ app.get("/health", (req, res) => {
 if (ENV.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-  app.get("/{*any}", (req, res) => {
+  app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
   });
 }
@@ -42,7 +88,7 @@ if (ENV.NODE_ENV === "production") {
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`server is running on port ${PORT}`);
     });
   } catch (error) {

@@ -16,12 +16,23 @@ export const protectRoute = [
       // This fixes vanished users if the DB was wiped or webhook failed.
       if (!user) {
         const clerkUser = await clerkClient.users.getUser(clerkId);
-        user = await User.create({
-          clerkId,
-          email: clerkUser.emailAddresses?.[0]?.emailAddress || "",
-          name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || "User",
-          profileImage: clerkUser.imageUrl || "",
-        });
+        const metadataRole = clerkUser.publicMetadata?.role || "candidate";
+        const email = clerkUser.emailAddresses?.[0]?.emailAddress || "";
+        const name = `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || "User";
+        const profileImage = clerkUser.imageUrl || "";
+
+        user = await User.findOneAndUpdate(
+          { email },
+          {
+            $set: {
+              clerkId,
+              name,
+              profileImage,
+              role: metadataRole,
+            }
+          },
+          { new: true, upsert: true }
+        );
       }
 
       //   attach user to req

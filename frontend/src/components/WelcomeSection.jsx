@@ -1,7 +1,7 @@
 import { useUser } from "@clerk/clerk-react";
 import { ArrowRightIcon, TerminalSquareIcon } from "lucide-react";
 
-function WelcomeSection({ onCreateSession }) {
+function WelcomeSection() {
   const { user } = useUser();
 
   return (
@@ -22,13 +22,6 @@ function WelcomeSection({ onCreateSession }) {
               Ready to write some clean code today?
             </p>
           </div>
-          <button
-            onClick={onCreateSession}
-            className="px-6 py-3 bg-white text-black text-sm font-medium rounded-lg hover:bg-neutral-200 transition-colors flex items-center gap-2 cursor-pointer shadow-xl shadow-white/5"
-          >
-            <span>Create Session</span>
-            <ArrowRightIcon className="size-4" />
-          </button>
         </div>
       </div>
     </div>

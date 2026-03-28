@@ -41,6 +41,11 @@ function ProblemPage() {
     setOutput(null);
   };
 
+  const handleCodeReset = () => {
+    setCode(currentProblem.starterCode[selectedLanguage]);
+    setOutput(null);
+  };
+
   const handleProblemChange = (newProblemId) => navigate(`/problem/${newProblemId}`);
 
   const triggerConfetti = () => {
@@ -160,6 +165,7 @@ function ProblemPage() {
                   onLanguageChange={handleLanguageChange}
                   onCodeChange={setCode}
                   onRunCode={handleRunCode}
+                  onReset={handleCodeReset}
                 />
               </Panel>
 

@@ -54,11 +54,11 @@ export const useJoinSession = () => {
   const result = useMutation({
     mutationKey: ["joinSession"],
     mutationFn: sessionApi.joinSession,
-    onSuccess: (_, sessionId) => {
+    onSuccess: (_, variables) => {
       toast.success("Joined session successfully!");
       // Mark the joined session and active list as stale
       queryClient.invalidateQueries({ queryKey: ["activeSessions"] });
-      queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["session", variables.id] });
     },
     onError: (error) => toast.error(error.response?.data?.message || "Failed to join session"),
   });
@@ -80,6 +80,23 @@ export const useEndSession = () => {
       queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
     },
     onError: (error) => toast.error(error.response?.data?.message || "Failed to end session"),
+  });
+
+  return result;
+};
+
+export const useSubmitFeedback = () => {
+  const queryClient = useQueryClient();
+
+  const result = useMutation({
+    mutationKey: ["submitFeedback"],
+    mutationFn: sessionApi.submitFeedback,
+    onSuccess: (_, variables) => {
+      toast.success("Feedback submitted!");
+      queryClient.invalidateQueries({ queryKey: ["session", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["myRecentSessions"] });
+    },
+    onError: (error) => toast.error(error.response?.data?.message || "Failed to submit feedback"),
   });
 
   return result;

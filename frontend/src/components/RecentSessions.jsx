@@ -45,13 +45,13 @@ function RecentSessions({ sessions, isLoading }) {
                   <Code2Icon className={`size-4 ${session.status === "active" ? "text-emerald-400" : "text-neutral-400 group-hover:text-white"}`} />
                 </div>
                 <div className="flex-1 min-w-0 pt-1">
-                  <h3 className="font-medium text-white text-sm truncate mb-2">{session.problem}</h3>
+                  <h3 className="font-medium text-white text-sm truncate mb-2">{session.problem?.title}</h3>
                   <span
                     className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${getDifficultyBadgeClass(
-                      session.difficulty
+                      session.problem?.difficulty || 'easy'
                     )}`}
                   >
-                    {session.difficulty}
+                    {session.problem?.difficulty || 'easy'}
                   </span>
                 </div>
               </div>
@@ -67,9 +67,7 @@ function RecentSessions({ sessions, isLoading }) {
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="size-3.5" />
-                  <span>
-                    {session.participant ? "2" : "1"} participant{session.participant ? "s" : ""}
-                  </span>
+                  <span>2 participants</span>
                 </div>
               </div>
 

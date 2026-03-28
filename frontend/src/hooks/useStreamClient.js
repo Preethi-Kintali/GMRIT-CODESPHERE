@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { initializeStreamClient, disconnectStreamClient } from "../lib/stream";
 import { sessionApi } from "../api/sessions";
 
-function useStreamClient(session, loadingSession, isHost, isParticipant) {
+function useStreamClient(session, loadingSession, isInterviewer, isCandidate) {
   const [streamClient, setStreamClient] = useState(null);
   const [call, setCall] = useState(null);
   const [chatClient, setChatClient] = useState(null);
@@ -16,9 +16,14 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
     let chatClientInstance = null;
 
     const initCall = async () => {
-      if (!session?.callId) return;
-      if (!isHost && !isParticipant) return;
-      if (session.status === "completed") return;
+      if (!isInterviewer && !isCandidate) {
+        setIsInitializingCall(false);
+        return;
+      }
+      if (session.status === "completed" || session.status === "scheduled") {
+        setIsInitializingCall(false);
+        return;
+      }
 
       try {
         const { token, userId, userName, userImage } = await sessionApi.getStreamToken();
@@ -77,7 +82,7 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
         }
       })();
     };
-  }, [session, loadingSession, isHost, isParticipant]);
+  }, [session, loadingSession, isInterviewer, isCandidate]);
 
   return {
     streamClient,

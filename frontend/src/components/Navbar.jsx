@@ -4,10 +4,12 @@ import {
   LayoutDashboardIcon,
   TerminalSquareIcon,
 } from "lucide-react";
-import { UserButton } from "@clerk/clerk-react";
+import { UserButton, useUser } from "@clerk/clerk-react";
 
 function Navbar() {
   const location = useLocation();
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata?.role === "admin";
 
   const isActive = (path) => location.pathname === path;
 
@@ -58,6 +60,23 @@ function Navbar() {
             <LayoutDashboardIcon className="size-4" />
             <span className="hidden sm:inline">Dashboard</span>
           </Link>
+
+          {/* ADMIN PAGE LINK */}
+          {isAdmin && (
+            <Link
+              to={"/admin"}
+              className={`px-3 py-2 flex items-center gap-2 rounded-md transition-colors text-sm font-medium
+                \${
+                  location.pathname.startsWith("/admin")
+                    ? "bg-purple-500/10 text-purple-400"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                }
+              `}
+            >
+              <LayoutDashboardIcon className="size-4" />
+              <span className="hidden sm:inline">Admin</span>
+            </Link>
+          )}
 
           <div className="ml-4 pl-4 border-l border-white/10 flex items-center h-8">
             <UserButton />
