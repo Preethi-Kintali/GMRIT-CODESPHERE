@@ -11,6 +11,7 @@ import AdminRoute from "./components/AdminRoute";
 import AdminLayout from "./components/AdminLayout";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import InterviewerManagementPage from "./pages/InterviewerManagementPage";
+import AdminCandidatesPage from "./pages/AdminCandidatesPage";
 import ProblemEditorPage from "./pages/ProblemEditorPage";
 import CreateSessionPage from "./pages/CreateSessionPage";
 import FeedbackPage from "./pages/FeedbackPage";
@@ -79,6 +80,16 @@ function App() {
             <AdminRoute>
               <AdminLayout>
                 <InterviewerManagementPage />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/candidates"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <AdminCandidatesPage />
               </AdminLayout>
             </AdminRoute>
           }

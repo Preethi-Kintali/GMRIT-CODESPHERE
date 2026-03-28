@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../lib/axios";
-import { Loader2, Plus, X, Users, Mail, BadgeCheck, ShieldAlert } from "lucide-react";
+import { Plus, X, Users, Mail, BadgeCheck } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function InterviewerManagementPage() {
@@ -40,15 +40,15 @@ export default function InterviewerManagementPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-6 max-w-7xl mx-auto space-y-8">
+      <div className="flex items-center justify-between flex-col md:flex-row gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Interviewers</h1>
-          <p className="text-slate-400">Manage technical interviewers and expertise</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text">Interviewers</h1>
+          <p className="text-base-content/70 mt-1">Manage technical interviewers and expertise</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          className="btn btn-primary"
         >
           <Plus size={18} />
           <span>Add Interviewer</span>
@@ -57,53 +57,59 @@ export default function InterviewerManagementPage() {
 
       {isLoading ? (
         <div className="flex justify-center p-10">
-          <Loader2 className="w-8 h-8 animate-spin text-slate-500" />
+          <span className="loading loading-spinner loading-lg text-primary"></span>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {interviewers?.map((interviewer) => (
-            <div key={interviewer._id} className="bg-[#1e1e2e] rounded-xl p-5 border border-white/5 relative group">
-              <div className="flex items-center gap-4 mb-4">
-                <img
-                  src={interviewer.profileImage || `https://ui-avatars.com/api/?name=\${interviewer.name}`}
-                  alt={interviewer.name}
-                  className="w-14 h-14 rounded-full border-2 border-slate-700"
-                />
-                <div>
-                  <h3 className="text-lg font-semibold text-white">{interviewer.name}</h3>
-                  <div className="flex items-center gap-1 text-slate-400 text-sm">
-                    <Mail size={14} />
-                    <span>{interviewer.email}</span>
+            <div key={interviewer._id} className="card bg-base-200 shadow-sm border border-base-300 relative group">
+              <div className="card-body p-6">
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="avatar">
+                    <div className="w-14 h-14 rounded-full ring ring-primary/30 ring-offset-base-100 ring-offset-2">
+                      <img src={interviewer.profileImage || `https://ui-avatars.com/api/?name=${interviewer.name}`} alt={interviewer.name} />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="card-title text-lg">{interviewer.name}</h3>
+                    <div className="flex items-center gap-1.5 text-base-content/70 text-sm">
+                      <Mail size={14} className="opacity-70" />
+                      <span>{interviewer.email}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {interviewer.department && (
-                <div className="mb-3">
-                  <span className="px-2 py-1 bg-white/5 text-slate-300 text-xs rounded-md">
-                    Dept: {interviewer.department}
-                  </span>
-                </div>
-              )}
-
-              {interviewer.expertise?.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {interviewer.expertise.map((tag, idx) => (
-                    <span key={idx} className="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-full border border-emerald-500/20">
-                      {tag}
+                {interviewer.department && (
+                  <div className="mt-3">
+                    <span className="text-sm">
+                      <span className="text-base-content/60">Dept: </span>
+                      <strong className="font-semibold text-base-content/90">{interviewer.department}</strong>
                     </span>
-                  ))}
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  {interviewer.expertise?.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {interviewer.expertise.map((tag, idx) => (
+                        <div key={idx} className="badge badge-accent badge-outline badge-sm">
+                          {tag}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-base-content/50 italic">No expertise tags</p>
+                  )}
                 </div>
-              ) : (
-                <p className="text-xs text-slate-500 italic">No expertise tags</p>
-              )}
+              </div>
             </div>
           ))}
 
           {interviewers?.length === 0 && (
-            <div className="col-span-full border border-dashed border-white/10 rounded-xl p-10 text-center">
-              <Users className="w-10 h-10 text-slate-500 mx-auto mb-3" />
-              <p className="text-slate-400">No interviewers added yet.</p>
+            <div className="col-span-full border-2 border-dashed border-base-300 rounded-box p-12 text-center flex flex-col items-center justify-center">
+              <Users className="w-12 h-12 text-base-content/30 mb-4" />
+              <h3 className="text-lg font-medium text-base-content/80 mb-1">No interviewers found</h3>
+              <p className="text-base-content/50">Add someone to your team to see them here.</p>
             </div>
           )}
         </div>
@@ -111,74 +117,77 @@ export default function InterviewerManagementPage() {
 
       {/* Add Interviewer Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#1e1e2e] w-full max-w-md rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b border-white/10">
-              <h2 className="text-lg font-semibold text-white">Add Interviewer</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+        <div className="modal modal-open">
+          <div className="modal-box bg-base-200">
+            <h3 className="font-bold text-xl mb-6 flex items-center justify-between">
+              Add Interviewer
+              <button onClick={() => setIsModalOpen(false)} className="btn btn-sm btn-ghost btn-circle">
                 <X size={20} />
               </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
-              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg flex gap-3 text-sm text-blue-200">
-                <BadgeCheck className="shrink-0 w-5 h-5 text-blue-400" />
-                <p>The user must already be signed up in CodeSphere to be promoted to Interviewer.</p>
+            </h3>
+            
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="alert alert-info bg-info/10 text-info border-info/20 shadow-none py-3">
+                <BadgeCheck className="shrink-0 w-5 h-5" />
+                <span className="text-sm">The user must already be signed up in CodeSphere to be promoted.</span>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">User Email Address</label>
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-medium text-base-content/80">User Email Address</span>
+                </label>
                 <input
                   type="email"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="interviewer@example.com"
-                  className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input input-bordered w-full bg-base-100 focus:outline-none"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Department</label>
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-medium text-base-content/80">Department</span>
+                </label>
                 <input
                   type="text"
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                   placeholder="e.g. Engineering, HR"
-                  className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input input-bordered w-full bg-base-100 focus:outline-none"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Expertise Tags</label>
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-medium text-base-content/80">Expertise Tags</span>
+                </label>
                 <input
                   type="text"
                   value={formData.expertise}
                   onChange={(e) => setFormData({ ...formData, expertise: e.target.value })}
                   placeholder="Comma separated: React, Node, DSA"
-                  className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input input-bordered w-full bg-base-100 focus:outline-none"
                 />
               </div>
 
-              <div className="pt-4 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-slate-300 hover:text-white transition-colors"
-                >
+              <div className="modal-action mt-6">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-ghost">
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={promoteMutation.isPending}
-                  className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                  className="btn btn-primary"
                 >
-                  {promoteMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : null}
+                  {promoteMutation.isPending && <span className="loading loading-spinner loading-sm"></span>}
                   Promote
                 </button>
               </div>
             </form>
           </div>
+          <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}></div>
         </div>
       )}
     </div>

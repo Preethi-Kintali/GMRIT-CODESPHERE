@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../lib/axios";
-import { Loader2, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 
@@ -50,25 +50,27 @@ export default function CreateSessionPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-3 bg-blue-500/10 rounded-lg">
-          <Calendar className="w-6 h-6 text-blue-400" />
+    <div className="max-w-3xl mx-auto space-y-8 p-6">
+      <div className="flex items-center gap-4">
+        <div className="bg-primary/10 p-4 rounded-xl border border-primary/20">
+          <Calendar className="w-8 h-8 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Schedule Interview</h1>
-          <p className="text-slate-400">Set up a session and send secure invites</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text">Schedule Interview</h1>
+          <p className="text-base-content/70 mt-1">Set up a session and send secure invites</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-[#1e1e2e] rounded-xl p-6 border border-white/5 space-y-5">
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Interviewer</label>
+      <form onSubmit={handleSubmit} className="bg-base-200/50 rounded-2xl p-8 border border-base-300 shadow-sm space-y-6">
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text font-medium text-base-content/80">Interviewer</span>
+          </label>
           <select 
             required
             value={formData.interviewer}
             onChange={(e) => setFormData({...formData, interviewer: e.target.value})}
-            className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none"
+            className="select select-bordered w-full bg-base-100 focus:outline-none"
           >
             <option value="">Select an Interviewer</option>
             {interviewers?.map((user) => (
@@ -77,13 +79,15 @@ export default function CreateSessionPage() {
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Candidate</label>
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text font-medium text-base-content/80">Candidate</span>
+          </label>
           <select 
             required
             value={formData.candidate}
             onChange={(e) => setFormData({...formData, candidate: e.target.value})}
-            className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none"
+            className="select select-bordered w-full bg-base-100 focus:outline-none"
           >
             <option value="">Select a Candidate</option>
             {candidates?.map((user) => (
@@ -92,13 +96,15 @@ export default function CreateSessionPage() {
           </select>
         </div>
 
-        <div>
-           <label className="block text-sm font-medium text-slate-300 mb-1">Coding Problem</label>
+        <div className="form-control w-full">
+           <label className="label">
+             <span className="label-text font-medium text-base-content/80">Coding Problem</span>
+           </label>
            <select 
             required
             value={formData.problem}
             onChange={(e) => setFormData({...formData, problem: e.target.value})}
-            className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none"
+            className="select select-bordered w-full bg-base-100 focus:outline-none"
           >
             <option value="">Select a Problem</option>
             {problems?.map((prob) => (
@@ -107,23 +113,27 @@ export default function CreateSessionPage() {
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Scheduled Date & Time</label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text font-medium text-base-content/80">Scheduled Date & Time</span>
+            </label>
             <input 
               type="datetime-local" 
               required
               value={formData.scheduledAt}
               onChange={(e) => setFormData({...formData, scheduledAt: e.target.value})}
-              className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-white" 
+              className="input input-bordered w-full bg-base-100 focus:outline-none" 
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Duration (minutes)</label>
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text font-medium text-base-content/80">Duration (minutes)</span>
+            </label>
             <select 
               value={formData.duration}
               onChange={(e) => setFormData({...formData, duration: Number(e.target.value)})}
-              className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-white"
+              className="select select-bordered w-full bg-base-100 focus:outline-none"
             >
               <option value={45}>45 Minutes</option>
               <option value={60}>60 Minutes</option>
@@ -132,13 +142,13 @@ export default function CreateSessionPage() {
           </div>
         </div>
 
-        <div className="pt-4 flex justify-end">
+        <div className="pt-6 flex justify-end">
           <button 
             type="submit" 
             disabled={scheduleMutation.isPending}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50"
+            className="btn btn-primary w-full md:w-auto"
           >
-            {scheduleMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            {scheduleMutation.isPending && <span className="loading loading-spinner loading-sm"></span>}
             Schedule & Send Invites
           </button>
         </div>

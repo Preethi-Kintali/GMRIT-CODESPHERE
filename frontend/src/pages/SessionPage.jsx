@@ -87,7 +87,7 @@ function SessionPage() {
   useEffect(() => {
     if (!session || !user || loadingSession) return;
     
-    const backendUrl = import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
+    const backendUrl = import.meta.env.MODE === "development" ? "http://localhost:3000" : "/";
     socketRef.current = io(backendUrl);
     socketRef.current.emit("join_session", id);
 
