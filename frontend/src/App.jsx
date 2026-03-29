@@ -17,6 +17,7 @@ import AdminProblemsPage from "./pages/AdminProblemsPage";
 import ProblemEditorPage from "./pages/ProblemEditorPage";
 import CreateSessionPage from "./pages/CreateSessionPage";
 import FeedbackPage from "./pages/FeedbackPage";
+import CandidateFeedbackPage from "./pages/CandidateFeedbackPage";
 import InterviewerCalendarPage from "./pages/InterviewerCalendarPage";
 import ProfilePage from "./pages/ProfilePage";
 
@@ -66,6 +67,10 @@ function App() {
         <Route
           path="/session/:id/feedback"
           element={isSignedIn ? <FeedbackPage /> : <Navigate to={"/"} />}
+        />
+        <Route
+          path="/session/:id/feedback/candidate"
+          element={isSignedIn ? <CandidateFeedbackPage /> : <Navigate to={"/"} />}
         />
         <Route
           path="/profile"

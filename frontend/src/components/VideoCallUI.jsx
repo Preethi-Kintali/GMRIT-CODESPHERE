@@ -73,7 +73,7 @@ function VideoCallUI({ chatClient, channel }) {
       {/* CHAT SECTION */}
       {chatClient && channel && (
         <div
-          className={`flex flex-col border-l border-white/10 bg-[#1e1e1e] transition-all duration-300 ease-in-out ${isChatOpen ? "w-80 opacity-100" : "w-0 opacity-0 overflow-hidden"
+          className={`flex flex-col border-l border-white/10 bg-[#1e1e1e] transition-all duration-300 ease-in-out ${isChatOpen ? "absolute md:relative right-0 top-0 bottom-0 z-50 w-full md:w-80 opacity-100" : "w-0 opacity-0 overflow-hidden"
             }`}
         >
           {isChatOpen && (

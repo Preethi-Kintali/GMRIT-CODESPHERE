@@ -39,9 +39,38 @@ export default function AdminDashboardPage() {
   });
 
   const handleCancelSession = (id) => {
-    if (confirm("Are you sure you want to cancel this session?")) {
-      cancelSessionMutation.mutate(id);
-    }
+    toast((t) => (
+      <div className="space-y-3">
+        <p className="text-sm font-medium text-white">Are you sure you want to cancel this session?</p>
+        <div className="flex justify-end gap-2">
+          <button 
+            className="btn btn-xs btn-ghost text-neutral-400"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Go Back
+          </button>
+          <button 
+            className="btn btn-xs btn-error"
+            onClick={() => {
+              cancelSessionMutation.mutate(id);
+              toast.dismiss(t.id);
+            }}
+          >
+            Yes, Cancel
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+      position: "top-center",
+      style: {
+        background: "#1e1e1e",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        padding: "16px",
+        borderRadius: "12px",
+        minWidth: "280px"
+      }
+    });
   };
 
   return (

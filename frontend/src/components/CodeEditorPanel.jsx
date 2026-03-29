@@ -34,7 +34,7 @@ function CodeEditorPanel({
   return (
     <div className="h-full bg-[#1e1e1e] flex flex-col rounded-xl overflow-hidden border border-white/10">
       {/* HEADER */}
-      <div className="flex items-center justify-between px-4 h-12 bg-[#2d2d2d] border-b border-white/10">
+      <div className="flex items-center justify-between px-4 h-auto min-h-[3rem] py-2 bg-[#2d2d2d] border-b border-white/10 flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 rounded-md border border-white/5">
             <Code2Icon className="size-4 text-emerald-400" />

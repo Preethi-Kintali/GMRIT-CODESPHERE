@@ -22,11 +22,11 @@ function ProblemDescription({ problem, currentProblemId, onProblemChange, allPro
             <div className="max-h-64 overflow-y-auto custom-scrollbar">
               {allProblems.map((p) => (
                 <button
-                  key={p.id}
-                  onClick={() => onProblemChange(p.id)}
-                  className={`w-full text-left px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 ${currentProblemId === p.id ? "bg-white/[0.03]" : ""}`}
+                  key={p._id || p.id}
+                  onClick={() => onProblemChange(p.slug || p.id)}
+                  className={`w-full text-left px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 ${currentProblemId === (p.slug || p.id) ? "bg-white/[0.03]" : ""}`}
                 >
-                  <span className={`text-sm ${currentProblemId === p.id ? "text-white font-medium" : "text-neutral-300"}`}>{p.title}</span>
+                  <span className={`text-sm ${currentProblemId === (p.slug || p.id) ? "text-white font-medium" : "text-neutral-300"}`}>{p.title}</span>
                   <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${getDifficultyBadgeClass(p.difficulty)}`}>
                     {p.difficulty}
                   </span>
@@ -46,71 +46,75 @@ function ProblemDescription({ problem, currentProblemId, onProblemChange, allPro
               {problem.difficulty}
             </span>
             <span className="text-xs text-neutral-500 font-medium px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
-              {problem.category}
+              {Array.isArray(problem.category) ? problem.category.join(", ") : problem.category}
             </span>
           </div>
         </div>
 
         {/* PROBLEM DESC */}
-        <div className="space-y-4 text-[14px] leading-relaxed text-neutral-300">
-          <p>{problem.description.text}</p>
-          {problem.description.notes.map((note, idx) => (
-            <p key={idx}>{note}</p>
+        <div className="space-y-4 text-[14px] leading-relaxed text-neutral-300 whitespace-pre-wrap">
+          <p>{problem.description?.text}</p>
+          {(problem.description?.notes || []).map((note, idx) => (
+            <p key={idx} className="italic text-neutral-400 font-medium">{note}</p>
           ))}
         </div>
 
         {/* EXAMPLES SECTION */}
-        <div className="space-y-6 pt-4">
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <FileTextIcon className="size-4 text-emerald-400" />
-            Examples
-          </h2>
+        {problem.examples && problem.examples.length > 0 && (
+          <div className="space-y-6 pt-4">
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <FileTextIcon className="size-4 text-emerald-400" />
+              Examples
+            </h2>
 
-          <div className="space-y-6">
-            {problem.examples.map((example, idx) => (
-              <div key={idx} className="space-y-3">
-                <p className="font-medium text-[13px] text-neutral-400">Example {idx + 1}:</p>
-                <div className="bg-[#2d2d2d] border border-white/10 rounded-lg p-4 font-mono text-[13px] space-y-2 relative overflow-hidden group">
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500/30 group-hover:bg-emerald-500/50 transition-colors" />
+            <div className="space-y-6">
+              {problem.examples.map((example, idx) => (
+                <div key={idx} className="space-y-3">
+                  <p className="font-medium text-[13px] text-neutral-400">Example {idx + 1}:</p>
+                  <div className="bg-[#2d2d2d] border border-white/10 rounded-lg p-4 font-mono text-[13px] space-y-2 relative overflow-hidden group">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500/30 group-hover:bg-emerald-500/50 transition-colors" />
 
-                  <div className="flex items-start gap-4">
-                    <span className="text-neutral-500 font-semibold w-16 shrink-0">Input:</span>
-                    <span className="text-neutral-300">{example.input}</span>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <span className="text-neutral-500 font-semibold w-16 shrink-0">Output:</span>
-                    <span className="text-emerald-400">{example.output}</span>
-                  </div>
-
-                  {example.explanation && (
-                    <div className="pt-3 mt-3 border-t border-white/5">
-                      <div className="flex items-start gap-4">
-                        <span className="text-neutral-500 font-semibold w-16 shrink-0">Explain:</span>
-                        <span className="text-neutral-400 font-sans tracking-wide leading-relaxed">{example.explanation}</span>
-                      </div>
+                    <div className="flex items-start gap-4">
+                      <span className="text-neutral-500 font-semibold w-16 shrink-0">Input:</span>
+                      <span className="text-neutral-300">{example.input}</span>
                     </div>
-                  )}
+                    <div className="flex items-start gap-4">
+                      <span className="text-neutral-500 font-semibold w-16 shrink-0">Output:</span>
+                      <span className="text-emerald-400">{example.output}</span>
+                    </div>
+
+                    {example.explanation && (
+                      <div className="pt-3 mt-3 border-t border-white/5">
+                        <div className="flex items-start gap-4">
+                          <span className="text-neutral-500 font-semibold w-16 shrink-0">Explain:</span>
+                          <span className="text-neutral-400 font-sans tracking-wide leading-relaxed">{example.explanation}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* CONSTRAINTS */}
-        <div className="space-y-4 pt-4">
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Code2Icon className="size-4 text-emerald-400" />
-            Constraints
-          </h2>
-          <ul className="space-y-2">
-            {problem.constraints.map((constraint, idx) => (
-              <li key={idx} className="flex items-center gap-3 text-[13px]">
-                <div className="size-1.5 rounded-full bg-neutral-600" />
-                <code className="text-emerald-400/90 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{constraint}</code>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {problem.constraints && problem.constraints.length > 0 && (
+          <div className="space-y-4 pt-4">
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Code2Icon className="size-4 text-emerald-400" />
+              Constraints
+            </h2>
+            <ul className="space-y-2">
+              {problem.constraints.map((constraint, idx) => (
+                <li key={idx} className="flex items-center gap-3 text-[13px]">
+                  <div className="size-1.5 rounded-full bg-neutral-600" />
+                  <code className="text-emerald-400/90 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{constraint}</code>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

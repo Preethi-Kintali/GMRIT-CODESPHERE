@@ -28,9 +28,38 @@ export default function AdminCandidatesPage() {
   });
 
   const handlePromote = (email) => {
-    if (confirm(`Are you sure you want to promote ${email} to an Interviewer?`)) {
-      promoteMutation.mutate(email);
-    }
+    toast((t) => (
+      <div className="space-y-3">
+        <p className="text-sm font-medium text-white">Promote <span className="text-blue-400 font-bold">{email}</span> to an Interviewer?</p>
+        <div className="flex justify-end gap-2 text-xs">
+          <button 
+            className="btn btn-xs btn-ghost text-neutral-400"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancel
+          </button>
+          <button 
+            className="btn btn-xs bg-blue-500 hover:bg-blue-600 border-none text-white"
+            onClick={() => {
+              promoteMutation.mutate(email);
+              toast.dismiss(t.id);
+            }}
+          >
+            Yes, Promote
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+      position: "top-right",
+      style: {
+        background: "#1e1e1e",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        padding: "16px",
+        borderRadius: "12px",
+        minWidth: "300px"
+      }
+    });
   };
 
   return (
