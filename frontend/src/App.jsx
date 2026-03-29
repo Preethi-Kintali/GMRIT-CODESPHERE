@@ -1,5 +1,6 @@
 import { useUser } from "@clerk/clerk-react";
-import { Navigate, Route, Routes } from "react-router";
+import { Navigate, Route, Routes, useLocation } from "react-router";
+import { useEffect } from "react";
 import HomePage from "./pages/HomePage";
 
 import { Toaster } from "react-hot-toast";
@@ -12,9 +13,22 @@ import AdminLayout from "./components/AdminLayout";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import InterviewerManagementPage from "./pages/InterviewerManagementPage";
 import AdminCandidatesPage from "./pages/AdminCandidatesPage";
+import AdminProblemsPage from "./pages/AdminProblemsPage";
 import ProblemEditorPage from "./pages/ProblemEditorPage";
 import CreateSessionPage from "./pages/CreateSessionPage";
 import FeedbackPage from "./pages/FeedbackPage";
+import InterviewerCalendarPage from "./pages/InterviewerCalendarPage";
+import ProfilePage from "./pages/ProfilePage";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 function App() {
   const { isSignedIn, isLoaded, user } = useUser();
@@ -26,6 +40,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop />
       <Routes>
         <Route
           path="/"
@@ -51,6 +66,10 @@ function App() {
         <Route
           path="/session/:id/feedback"
           element={isSignedIn ? <FeedbackPage /> : <Navigate to={"/"} />}
+        />
+        <Route
+          path="/profile"
+          element={isSignedIn ? <ProfilePage /> : <Navigate to={"/"} />}
         />
 
         {/* Admin Routes */}
@@ -95,11 +114,41 @@ function App() {
           }
         />
         <Route
+          path="/admin/problems"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <AdminProblemsPage />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
           path="/admin/problems/new"
           element={
             <AdminRoute>
               <AdminLayout>
                 <ProblemEditorPage />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/problems/:id/edit"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <ProblemEditorPage />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/calendar"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <InterviewerCalendarPage />
               </AdminLayout>
             </AdminRoute>
           }

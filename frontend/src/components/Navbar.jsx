@@ -3,8 +3,10 @@ import {
   BookOpenIcon,
   LayoutDashboardIcon,
   TerminalSquareIcon,
+  UserCircleIcon,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/clerk-react";
+import NotificationBell from "./NotificationBell";
 
 function Navbar() {
   const location = useLocation();
@@ -61,6 +63,21 @@ function Navbar() {
             <span className="hidden sm:inline">Dashboard</span>
           </Link>
 
+          {/* PROFILE PAGE LINK */}
+          <Link
+            to={"/profile"}
+            className={`px-3 py-2 flex items-center gap-2 rounded-md transition-colors text-sm font-medium
+              ${
+                isActive("/profile")
+                  ? "bg-white/10 text-white"
+                  : "text-neutral-400 hover:text-white hover:bg-white/5"
+              }
+            `}
+          >
+            <UserCircleIcon className="size-4" />
+            <span className="hidden sm:inline">Profile</span>
+          </Link>
+
           {/* ADMIN PAGE LINK */}
           {isAdmin && (
             <Link
@@ -78,7 +95,8 @@ function Navbar() {
             </Link>
           )}
 
-          <div className="ml-4 pl-4 border-l border-white/10 flex items-center h-8">
+          <div className="ml-1 sm:ml-4 sm:pl-4 sm:border-l border-white/10 flex items-center h-8 gap-3">
+            <NotificationBell />
             <UserButton />
           </div>
         </div>

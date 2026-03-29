@@ -18,6 +18,8 @@ import executeRoutes from "./routes/executeRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import problemRoutes from "./routes/problemRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 const PORT = ENV.PORT;
 const app = express();
@@ -71,6 +73,8 @@ app.use("/api/sessions", sessionRoutes);
 app.use("/api/execute", executeRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/problems", protectRoute, problemRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/health", (req, res) => {
   res.status(200).json({ message: "api is up and running" });

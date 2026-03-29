@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema(
     department: {
       type: String,
     },
+    // Maintained specifically for backend routing/interviewer matching historically
     expertise: {
       type: [String],
       default: [],
@@ -35,6 +36,44 @@ const userSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    // Standard User Profile Fields
+    username: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    bio: {
+      type: String,
+      default: "",
+    },
+    title: {
+      type: String,
+      default: "",
+    },
+    skills: {
+      type: [String],
+      default: [],
+    },
+    githubUrl: {
+      type: String,
+      default: "",
+    },
+    leetcodeUrl: {
+      type: String,
+      default: "",
+    },
+    linkedinUrl: {
+      type: String,
+      default: "",
+    },
+    resumeUrl: {
+      type: String,
+      default: "",
+    },
+    hasCompletedProfile: {
+      type: Boolean,
+      default: false,
     },
   },
   {

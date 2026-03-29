@@ -1,6 +1,7 @@
 import express from "express";
 import { Webhook } from "svix";
 import User from "../models/User.js";
+import Notification from "../models/Notification.js";
 import { ENV } from "../lib/env.js";
 
 const router = express.Router();
@@ -52,16 +53,34 @@ router.post(
         const profileImage = evt.data.image_url || "";
         const role = evt.data.public_metadata?.role || "candidate";
 
-        await User.findOneAndUpdate(
+        const safeBaseName = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+        const defaultUsername = `${safeBaseName}${Math.floor(Math.random() * 10000)}`;
+
+        const updatedUser = await User.findOneAndUpdate(
           { clerkId: id },
           {
-            email,
-            name,
-            profileImage,
-            role,
+            $set: {
+              email,
+              name,
+              profileImage,
+              role,
+            },
+            $setOnInsert: {
+              username: defaultUsername
+            }
           },
           { upsert: true, new: true }
         );
+
+        if (eventType === "user.created" && updatedUser) {
+          await Notification.create({
+            userId: updatedUser._id,
+            type: "general",
+            title: "Welcome to GMRIT CodeSphere!",
+            message: "We're excited to have you on board. Please navigate to your Profile to set up your Developer details so interviewers can learn more about you.",
+            link: "/profile"
+          });
+        }
 
         console.log(`Webhook handled: User ${id} updated/created`);
       }

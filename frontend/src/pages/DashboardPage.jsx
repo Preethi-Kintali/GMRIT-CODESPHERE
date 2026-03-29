@@ -1,6 +1,7 @@
-import { useNavigate } from "react-router";
+import { useNavigate, Navigate } from "react-router";
 import { useUser } from "@clerk/clerk-react";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import axiosInstance from "../lib/axios";
 import {
   useActiveSessions,
   useMyRecentSessions,
@@ -20,6 +21,14 @@ function DashboardPage() {
   const { data: recentSessionsData, isLoading: loadingRecentSessions } =
     useMyRecentSessions();
 
+  const { data: profileData, isLoading: loadingProfile } = useQuery({
+    queryKey: ["my-profile"],
+    queryFn: async () => {
+      const res = await axiosInstance.get("/users/me");
+      return res.data;
+    },
+  });
+
   const activeSessions = activeSessionsData?.sessions || [];
   const recentSessions = recentSessionsData?.sessions || [];
 
@@ -32,6 +41,10 @@ function DashboardPage() {
     );
   };
 
+  if (!loadingProfile && profileData?.user && !profileData.user.hasCompletedProfile) {
+    return <Navigate to="/profile" replace />;
+  }
+
   return (
     <>
       <div className="min-h-screen bg-[#000000] text-neutral-300 font-sans">
@@ -39,7 +52,7 @@ function DashboardPage() {
         <WelcomeSection />
 
         {/* Grid layout */}
-        <div className="container mx-auto px-6 pb-16">
+        <div className="max-w-5xl mx-auto px-6 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <StatsCards
               activeSessionsCount={activeSessions.length}

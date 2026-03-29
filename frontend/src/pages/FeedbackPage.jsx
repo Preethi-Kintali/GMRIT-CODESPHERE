@@ -93,7 +93,7 @@ function FeedbackPage() {
                       className="p-1 transition-transform hover:scale-110 focus:outline-none"
                     >
                       <StarIcon
-                        className={`size-8 \${
+                        className={`size-8 ${
                           (hoverRating || rating) >= star
                             ? "fill-amber-400 text-amber-400"
                             : "text-neutral-600"
@@ -111,7 +111,7 @@ function FeedbackPage() {
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <label
-                    className={`flex cursor-pointer items-center p-4 border rounded-xl transition-all \${
+                    className={`flex cursor-pointer items-center p-4 border rounded-xl transition-all ${
                       recommendation === "Hire"
                         ? "bg-emerald-500/10 border-emerald-500/50"
                         : "bg-black/20 border-white/5 hover:border-white/10"
@@ -127,12 +127,12 @@ function FeedbackPage() {
                     />
                     <div className="flex items-center gap-3">
                       <CheckCircle2Icon
-                        className={`size-5 \${
+                        className={`size-5 ${
                           recommendation === "Hire" ? "text-emerald-400" : "text-neutral-500"
                         }`}
                       />
                       <span
-                        className={`font-medium \${
+                        className={`font-medium ${
                           recommendation === "Hire" ? "text-emerald-400" : "text-neutral-300"
                         }`}
                       >
@@ -142,7 +142,7 @@ function FeedbackPage() {
                   </label>
 
                   <label
-                    className={`flex cursor-pointer items-center p-4 border rounded-xl transition-all \${
+                    className={`flex cursor-pointer items-center p-4 border rounded-xl transition-all ${
                       recommendation === "Consider"
                         ? "bg-amber-500/10 border-amber-500/50"
                         : "bg-black/20 border-white/5 hover:border-white/10"
@@ -158,12 +158,12 @@ function FeedbackPage() {
                     />
                     <div className="flex items-center gap-3">
                       <HelpCircleIcon
-                        className={`size-5 \${
+                        className={`size-5 ${
                           recommendation === "Consider" ? "text-amber-400" : "text-neutral-500"
                         }`}
                       />
                       <span
-                        className={`font-medium \${
+                        className={`font-medium ${
                           recommendation === "Consider" ? "text-amber-400" : "text-neutral-300"
                         }`}
                       >
@@ -173,7 +173,7 @@ function FeedbackPage() {
                   </label>
 
                   <label
-                    className={`flex cursor-pointer items-center p-4 border rounded-xl transition-all \${
+                    className={`flex cursor-pointer items-center p-4 border rounded-xl transition-all ${
                       recommendation === "Reject"
                         ? "bg-red-500/10 border-red-500/50"
                         : "bg-black/20 border-white/5 hover:border-white/10"
@@ -189,12 +189,12 @@ function FeedbackPage() {
                     />
                     <div className="flex items-center gap-3">
                       <XCircleIcon
-                        className={`size-5 \${
+                        className={`size-5 ${
                           recommendation === "Reject" ? "text-red-400" : "text-neutral-500"
                         }`}
                       />
                       <span
-                        className={`font-medium \${
+                        className={`font-medium ${
                           recommendation === "Reject" ? "text-red-400" : "text-neutral-300"
                         }`}
                       >

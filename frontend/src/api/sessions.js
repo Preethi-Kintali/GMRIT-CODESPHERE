@@ -24,8 +24,8 @@ export const sessionApi = {
     const response = await axiosInstance.post(`/sessions/${id}/join?token=${token}`);
     return response.data;
   },
-  endSession: async (id) => {
-    const response = await axiosInstance.post(`/sessions/${id}/end`);
+  endSession: async ({ id, finalCode, finalLanguage }) => {
+    const response = await axiosInstance.post(`/sessions/${id}/end`, { finalCode, finalLanguage });
     return response.data;
   },
   submitFeedback: async ({ id, data }) => {

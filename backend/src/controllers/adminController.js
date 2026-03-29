@@ -2,6 +2,8 @@ import User from "../models/User.js";
 import Session from "../models/Session.js";
 import Problem from "../models/Problem.js";
 import { clerkClient } from "@clerk/express";
+import { sendRoleNotice } from "../lib/email.js";
+import Notification from "../models/Notification.js";
 
 export const getAdminStats = async (req, res) => {
   try {
@@ -80,6 +82,26 @@ export const promoteToInterviewer = async (req, res) => {
       },
     });
 
+    // Notify user via Email
+    try {
+      await sendRoleNotice({
+        userEmail: user.email,
+        userName: user.name,
+        roleType: "Interviewer",
+        action: "promoted"
+      });
+    } catch (emailErr) {
+      console.error("Non-fatal email error:", emailErr);
+    }
+
+    // Create In-App Notification
+    await Notification.create({
+      userId: user._id,
+      type: "role_change",
+      title: "Promoted to Interviewer",
+      message: "Congratulations! You have been promoted to an Interviewer role."
+    });
+
     res.json({ message: "User promoted to interviewer successfully", user });
   } catch (error) {
     console.error("Error promoting user:", error);
@@ -97,6 +119,51 @@ export const getAllSessions = async (req, res) => {
     res.json({ sessions });
   } catch (error) {
     console.error("Error fetching all sessions:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const demoteInterviewer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (user.role === "admin") {
+       return res.status(400).json({ message: "Cannot demote an admin." });
+    }
+
+    // Update in MongoDB
+    user.role = "candidate";
+    user.department = undefined;
+    user.expertise = [];
+    await user.save();
+
+    // Update in Clerk Public Metadata
+    await clerkClient.users.updateUserMetadata(user.clerkId, {
+      publicMetadata: {
+        role: "candidate",
+      },
+    });
+
+    // Notify user via Email
+    try {
+      await sendRoleNotice({
+        userEmail: user.email,
+        userName: user.name,
+        roleType: "Candidate",
+        action: "demoted"
+      });
+    } catch (emailErr) {
+      console.error("Non-fatal email error:", emailErr);
+    }
+
+    res.json({ message: "Interviewer successfully moved back to candidate", user });
+  } catch (error) {
+    console.error("Error demoting user:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
