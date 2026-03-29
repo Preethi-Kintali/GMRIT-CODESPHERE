@@ -28,8 +28,28 @@ export const sessionApi = {
     const response = await axiosInstance.post(`/sessions/${id}/end`, { finalCode, finalLanguage });
     return response.data;
   },
-  submitFeedback: async ({ id, data }) => {
-    const response = await axiosInstance.post(`/sessions/${id}/feedback`, data);
+  submitFeedback: async ({ id, rating, notes, recommendation }) => {
+    const response = await axiosInstance.post(`/sessions/${id}/feedback`, { rating, notes, recommendation });
+    return response.data;
+  },
+  sendOtp: async (id) => {
+    const response = await axiosInstance.post(`/sessions/${id}/otp/send`);
+    return response.data;
+  },
+  verifyOtp: async ({ id, otp }) => {
+    const response = await axiosInstance.post(`/sessions/${id}/otp/verify`, { otp });
+    return response.data;
+  },
+  submitCandidateFeedback: async ({ id, rating, notes }) => {
+    const response = await axiosInstance.post(`/sessions/${id}/candidate-feedback`, { rating, notes });
+    return response.data;
+  },
+  recordViolation: async ({ id, type, message }) => {
+    const response = await axiosInstance.post(`/sessions/${id}/violation`, { type, message });
+    return response.data;
+  },
+  terminateByViolation: async ({ id, reason }) => {
+    const response = await axiosInstance.post(`/sessions/${id}/terminate`, { reason });
     return response.data;
   },
   getStreamToken: async () => {

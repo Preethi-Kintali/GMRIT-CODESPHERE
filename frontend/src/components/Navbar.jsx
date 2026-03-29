@@ -8,7 +8,7 @@ import {
 import { UserButton, useUser } from "@clerk/clerk-react";
 import NotificationBell from "./NotificationBell";
 
-function Navbar() {
+function Navbar({ children }) {
   const location = useLocation();
   const { user } = useUser();
   const isAdmin = user?.publicMetadata?.role === "admin";
@@ -27,10 +27,12 @@ function Navbar() {
             <TerminalSquareIcon className="size-4 text-white" />
           </div>
 
-          <span className="font-semibold text-white tracking-wide text-sm">
+          <span className="font-semibold text-white tracking-wide text-sm hidden lg:inline">
             GMRIT CodeSphere
           </span>
         </Link>
+
+        {children}
 
         <div className="flex items-center gap-1">
           {/* PROBLEMS PAGE LINK */}

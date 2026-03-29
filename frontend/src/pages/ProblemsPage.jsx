@@ -1,16 +1,30 @@
 import { Link } from "react-router";
 import Navbar from "../components/Navbar";
-
-import { PROBLEMS } from "../data/problems";
-import { ChevronRightIcon, Code2Icon, CheckCircle2Icon, CircleDotIcon, AlertCircleIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { problemsApi } from "../api/problems";
+import { ChevronRightIcon, Code2Icon, CheckCircle2Icon, CircleDotIcon, AlertCircleIcon, Loader2Icon } from "lucide-react";
 import { getDifficultyBadgeClass } from "../lib/utils";
 
 function ProblemsPage() {
-  const problems = Object.values(PROBLEMS);
+  const { data: problems = [], isLoading } = useQuery({
+    queryKey: ["published-problems"],
+    queryFn: problemsApi.getPublishedProblems,
+  });
 
   const easyProblemsCount = problems.filter((p) => p.difficulty === "Easy").length;
   const mediumProblemsCount = problems.filter((p) => p.difficulty === "Medium").length;
   const hardProblemsCount = problems.filter((p) => p.difficulty === "Hard").length;
+
+  if (isLoading) {
+     return (
+        <div className="min-h-screen bg-black">
+           <Navbar />
+           <div className="flex items-center justify-center p-20">
+              <Loader2Icon className="size-10 text-emerald-500 animate-spin" />
+           </div>
+        </div>
+     );
+  }
 
   return (
     <div className="min-h-screen bg-[#000000] text-neutral-300 font-sans">
@@ -29,8 +43,8 @@ function ProblemsPage() {
         <div className="space-y-4">
           {problems.map((problem) => (
             <Link
-              key={problem.id}
-              to={`/problem/${problem.id}`}
+              key={problem._id}
+              to={`/problem/${problem.slug}`}
               className="block p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all group"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -50,13 +64,13 @@ function ProblemsPage() {
                       </div>
 
                       <p className="text-xs text-neutral-500 font-medium tracking-wide uppercase">
-                        {problem.category}
+                        {Array.isArray(problem.category) ? problem.category.join(", ") : problem.category}
                       </p>
                     </div>
                   </div>
 
                   <p className="text-sm text-neutral-400 line-clamp-2 pl-14">
-                    {problem.description.text}
+                    {problem.description?.text}
                   </p>
                 </div>
 

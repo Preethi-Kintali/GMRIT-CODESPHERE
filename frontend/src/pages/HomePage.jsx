@@ -33,7 +33,7 @@ function HomePage() {
 
           {/* AUTH BTN */}
           <SignInButton mode="modal">
-            <button className="px-5 py-2 bg-white text-black text-sm font-medium rounded-md hover:bg-neutral-200 transition-colors flex items-center gap-2 cursor-pointer">
+            <button className="btn btn-sm btn-ghost bg-white/10 hover:bg-white/20 text-white border-none flex items-center gap-2">
               Get Started
             </button>
           </SignInButton>
@@ -60,13 +60,13 @@ function HomePage() {
 
           <div className="flex items-center gap-4 pt-4">
             <SignInButton mode="modal">
-              <button className="px-6 py-3 bg-white text-black text-sm font-medium rounded-lg hover:bg-neutral-200 transition-colors flex items-center gap-2 cursor-pointer">
+              <button className="btn btn-primary flex items-center gap-2">
                 Start Coding Now
                 <ArrowRightIcon className="size-4" />
               </button>
             </SignInButton>
 
-            <button className="px-6 py-3 bg-white/5 text-white text-sm font-medium rounded-lg border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-2 cursor-pointer">
+            <button className="btn btn-outline border-white/10 hover:bg-white/10 hover:text-white flex items-center gap-2">
               <VideoIcon className="size-4" />
               Watch Demo
             </button>
@@ -123,46 +123,51 @@ function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {/* Feature 1 */}
-            <div className="p-8 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors group">
-              <div className="size-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:border-white/20 transition-colors">
-                <VideoIcon className="size-5 text-white" />
+            <div className="card bg-base-200 border border-base-content/10 hover:border-base-content/30 transition-colors group">
+              <div className="card-body">
+                <div className="size-10 rounded-lg bg-base-300 flex items-center justify-center mb-6">
+                  <VideoIcon className="size-5 text-primary" />
+                </div>
+                <h3 className="card-title text-lg font-medium text-base-content mb-2">
+                  HD Video Comm
+                </h3>
+                <p className="text-sm text-base-content/70 leading-relaxed">
+                  Crystal clear, low-latency video and audio. Talk face-to-face
+                  while you code.
+                </p>
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">
-                HD Video Comm
-              </h3>
-              <p className="text-sm text-neutral-400 leading-relaxed">
-                Crystal clear, low-latency video and audio. Talk face-to-face
-                while you code.
-              </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="p-8 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors group">
-              <div className="size-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:border-white/20 transition-colors">
-                <Code2Icon className="size-5 text-white" />
+            <div className="card bg-base-200 border border-base-content/10 hover:border-base-content/30 transition-colors group">
+              <div className="card-body">
+                <div className="size-10 rounded-lg bg-base-300 flex items-center justify-center mb-6">
+                  <Code2Icon className="size-5 text-primary" />
+                </div>
+                <h3 className="card-title text-lg font-medium text-base-content mb-2">
+                  Real-time Editor
+                </h3>
+                <p className="text-sm text-base-content/70 leading-relaxed">
+                  Synchronized typing, syntax highlighting, and zero lag. Feel
+                  like you are on the same machine.
+                </p>
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">
-                Real-time Editor
-              </h3>
-              <p className="text-sm text-neutral-400 leading-relaxed">
-                Synchronized typing, syntax highlighting, and zero lag. Feel
-                like you are on the same machine.
-              </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="p-8 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors group">
-              <div className="size-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:border-white/20 transition-colors">
-                <ZapIcon className="size-5 text-white" />
+            <div className="card bg-base-200 border border-base-content/10 hover:border-base-content/30 transition-colors group">
+              <div className="card-body">
+                <div className="size-10 rounded-lg bg-base-300 flex items-center justify-center mb-6">
+                  <ZapIcon className="size-5 text-primary" />
+                </div>
+                <h3 className="card-title text-lg font-medium text-base-content mb-2">
+                  Instant Setup
+                </h3>
+                <p className="text-sm text-base-content/70 leading-relaxed">
+                  No environment configuration. Generate a link and start coding
+                  immediately.
+                </p>
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">
-                Instant Setup
-              </h3>
-              <p className="text-sm text-neutral-400 leading-relaxed">
-                No environment configuration. Generate a link and start coding
-                immediately.
-              </p>
             </div>
           </div>
         </div>

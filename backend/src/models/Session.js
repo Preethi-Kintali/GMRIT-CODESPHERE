@@ -36,10 +36,22 @@ const sessionSchema = new mongoose.Schema(
     },
     interviewerToken: { type: String, required: true },
     candidateToken: { type: String, required: true },
+    candidateOtp: {
+      code: { type: String },
+      expiresAt: { type: Date },
+    },
+    isVerified: { type: Boolean, default: false },
+    violationCount: { type: Number, default: 0 },
+    terminationReason: { type: String },
     feedback: {
       rating: { type: Number, min: 1, max: 5 },
       notes: { type: String },
       recommendation: { type: String, enum: ["Hire", "Consider", "Reject"] },
+    },
+    candidateFeedback: {
+      rating: { type: Number, min: 1, max: 5 },
+      notes: { type: String },
+      submittedAt: { type: Date },
     },
     finalCode: { type: String, default: "" },
     finalLanguage: { type: String, default: "" },

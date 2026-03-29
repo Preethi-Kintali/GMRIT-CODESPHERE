@@ -277,6 +277,12 @@ export async function joinSession(req, res) {
     if (session.interviewer.toString() === userId && session.interviewerToken === token) {
       isInterviewer = true;
     } else if (session.candidate.toString() === userId && session.candidateToken === token) {
+      if (!session.isVerified) {
+        return res.status(401).json({ 
+          message: "Account verification required", 
+          requiresVerification: true 
+        });
+      }
       isCandidate = true;
     } else {
       return res.status(403).json({ message: "Invalid token or unauthorized execution" });
@@ -436,6 +442,217 @@ export async function cancelSession(req, res) {
     res.status(200).json({ session, message: "Session cancelled successfully" });
   } catch (error) {
     console.error("Error in cancelSession:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function sendSessionOtp(req, res) {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id.toString();
+
+    const session = await Session.findById(id).populate("candidate");
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    if (session.candidate._id.toString() !== userId) {
+      return res.status(403).json({ message: "Only the assigned candidate can request an OTP" });
+    }
+
+    if (session.isVerified) {
+      return res.status(400).json({ message: "Candidate is already verified for this session" });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60000); // 10 minutes
+
+    session.candidateOtp = { code: otp, expiresAt };
+    await session.save();
+
+    // Send via email
+    await import("../lib/email.js").then(m => m.sendEmailOtp({
+      userEmail: session.candidate.email,
+      userName: session.candidate.name,
+      otpCode: otp
+    }));
+
+    // Send via notification
+    await Notification.create({
+      userId: session.candidate._id,
+      type: "session_otp",
+      title: "Your Interview Code",
+      message: `Your verification code for the interview is ${otp}. It expires in 10 minutes.`,
+    });
+
+    res.status(200).json({ message: "OTP sent successfully to your registered email" });
+  } catch (error) {
+    console.error("Error in sendSessionOtp:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function verifySessionOtp(req, res) {
+  try {
+    const { id } = req.params;
+    const { otp } = req.body;
+    const userId = req.user._id.toString();
+
+    const session = await Session.findById(id);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    if (session.candidate.toString() !== userId) {
+      return res.status(403).json({ message: "Unauthorized verification attempt" });
+    }
+
+    if (session.isVerified) {
+      return res.status(200).json({ message: "Already verified" });
+    }
+
+    if (!session.candidateOtp?.code || session.candidateOtp.code !== otp) {
+      return res.status(400).json({ message: "Invalid verification code" });
+    }
+
+    if (new Date() > session.candidateOtp.expiresAt) {
+      return res.status(400).json({ message: "Verification code has expired" });
+    }
+
+    session.isVerified = true;
+    session.candidateOtp = undefined; // Clear OTP after use
+    await session.save();
+
+    res.status(200).json({ message: "Verification successful. You can now join the session." });
+  } catch (error) {
+    console.error("Error in verifySessionOtp:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function submitCandidateFeedback(req, res) {
+  try {
+    const { id } = req.params;
+    const { rating, notes } = req.body;
+    const userId = req.user._id.toString();
+
+    const session = await Session.findById(id);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    if (session.candidate.toString() !== userId) {
+      return res.status(403).json({ message: "Only the candidate can submit this feedback" });
+    }
+
+    if (session.status !== "completed") {
+      return res.status(400).json({ message: "Feedback can only be submitted for completed sessions" });
+    }
+
+    session.candidateFeedback = {
+      rating,
+      notes,
+      submittedAt: new Date(),
+    };
+
+    await session.save();
+
+    res.status(200).json({ message: "Thank you for your feedback!" });
+  } catch (error) {
+    console.error("Error in submitCandidateFeedback:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function recordViolation(req, res) {
+  try {
+    const { id } = req.params;
+    const { type, message } = req.body;
+    const userId = req.user._id.toString();
+
+    const session = await Session.findById(id);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    if (session.candidate.toString() !== userId) {
+      return res.status(403).json({ message: "Unauthorized action" });
+    }
+
+    session.violationCount = (session.violationCount || 0) + 1;
+    await session.save();
+
+    // Notify interviewer via Notification
+    await Notification.create({
+      userId: session.interviewer,
+      type: "violation_warning",
+      title: "Security Violation Alert",
+      message: `Candidate ${type}: ${message} (Total: ${session.violationCount})`,
+    });
+
+    res.status(200).json({ violationCount: session.violationCount });
+  } catch (error) {
+    console.error("Error in recordViolation:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function terminateByViolation(req, res) {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const userId = req.user._id.toString();
+
+    const session = await Session.findById(id)
+      .populate("interviewer", "name email")
+      .populate("candidate", "name email");
+
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    // Can be triggered by candidate (auto) or interviewer (manual)
+    if (session.candidate._id.toString() !== userId && session.interviewer._id.toString() !== userId) {
+      return res.status(403).json({ message: "Unauthorized termination" });
+    }
+
+    if (session.status !== "active") {
+      return res.status(400).json({ message: "Only active sessions can be terminated for violations" });
+    }
+
+    // Cleanup Stream
+    try {
+      const call = streamClient.video.call("default", session.callId);
+      await call.delete({ hard: true });
+      const channel = chatClient.channel("messaging", session.callId);
+      await channel.delete();
+    } catch (e) {
+      console.error("Stream cleanup failed during termination:", e.message);
+    }
+
+    session.status = "completed"; // status is completed but recorded as violation
+    session.terminationReason = reason || "Security Policy Breach (3+ Fullscreen Violations)";
+    await session.save();
+
+    // Send Emails
+    await import("../lib/email.js").then(m => m.sendSecurityTerminationNotice({
+      interviewerEmail: session.interviewer.email,
+      interviewerName: session.interviewer.name,
+      candidateEmail: session.candidate.email,
+      candidateName: session.candidate.name,
+      reason: session.terminationReason
+    }));
+
+    // Create Final Notifications
+    await Notification.insertMany([
+      {
+        userId: session.interviewer._id,
+        type: "session_terminated",
+        title: "Session Terminated: Security",
+        message: `The session with ${session.candidate.name} was terminated for: ${session.terminationReason}`
+      },
+      {
+        userId: session.candidate._id,
+        type: "session_terminated",
+        title: "Policy Breach: Terminated",
+        message: "Your interview was terminated due to security violations. A report has been sent to the admin."
+      }
+    ]);
+
+    res.status(200).json({ message: "Session terminated due to security violations", status: "terminated" });
+  } catch (error) {
+    console.error("Error in terminateByViolation:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
