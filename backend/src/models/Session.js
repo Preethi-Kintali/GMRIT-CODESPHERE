@@ -39,8 +39,10 @@ const sessionSchema = new mongoose.Schema(
     feedback: {
       rating: { type: Number, min: 1, max: 5 },
       notes: { type: String },
-      recommendation: { type: String, enum: ["hire", "consider", "reject"] },
+      recommendation: { type: String, enum: ["Hire", "Consider", "Reject"] },
     },
+    finalCode: { type: String, default: "" },
+    finalLanguage: { type: String, default: "" },
   },
   {
     timestamps: true,

@@ -3,15 +3,139 @@ import Session from "../models/Session.js";
 import User from "../models/User.js";
 import Problem from "../models/Problem.js";
 import crypto from "crypto";
-import { sendInterviewInvite } from "../lib/email.js";
+import { sendInterviewInvite, sendCancellationNotice } from "../lib/email.js";
+import Notification from "../models/Notification.js";
 import { ENV } from "../lib/env.js";
 
 export async function scheduleSession(req, res) {
   try {
-    const { interviewer, candidate, problem, scheduledAt, duration } = req.body;
+    const { interviewer, candidate, problem, scheduledAt, duration, timezoneOffset } = req.body;
 
     if (!interviewer || !candidate || !problem || !scheduledAt || !duration) {
       return res.status(400).json({ message: "All scheduling fields are required" });
+    }
+
+    const start = new Date(scheduledAt);
+    const end = new Date(start.getTime() + duration * 60000);
+    const now = new Date();
+
+    // 1. Check if the date is in the past
+    if (start < now) {
+      return res.status(400).json({ message: "Cannot schedule sessions in the past." });
+    }
+
+    // 2. Base Scheduling Rule Validations (Sundays, Bounds, and Lunch) purely in Client Timezone Context
+    const offsetMs = (timezoneOffset || 0) * 60000;
+    const localStartEpoch = start.getTime() - offsetMs;
+    const localEndEpoch = end.getTime() - offsetMs;
+    
+    const localStartDate = new Date(localStartEpoch);
+    const localEndDate = new Date(localEndEpoch);
+    
+    // Rule a: Sundays
+    if (localStartDate.getUTCDay() === 0) {
+       return res.status(400).json({ message: "Interviews cannot be scheduled on Sundays." });
+    }
+
+    // Rule b: 9:00 AM to 9:00 PM Operational Bounds
+    const startTimeDecimal = localStartDate.getUTCHours() + localStartDate.getUTCMinutes() / 60;
+    const endTimeDecimal = localEndDate.getUTCHours() + localEndDate.getUTCMinutes() / 60;
+    
+    // Note: If session crosses beyond midnight local time, it's also effectively beyond 9 PM or next day.
+    if (startTimeDecimal < 9 || endTimeDecimal > 21 || localStartDate.getUTCDate() !== localEndDate.getUTCDate()) {
+       return res.status(400).json({ message: "Sessions must be scheduled strictly within 9:00 AM and 9:00 PM." });
+    }
+
+    // Rule c: Lunch Time (1:00 PM - 2:30 PM) Overlap Protection
+    if (startTimeDecimal < 14.5 && endTimeDecimal > 13) {
+       return res.status(400).json({ message: "Interviews cannot overlap with the 1:00 PM to 2:30 PM lunch break." });
+    }
+    
+    // 3. Check Daily Limits (Max 2 per day, one Morning & one Afternoon, 1.5hr Gap)
+    const localStartOfDay = new Date(localStartEpoch);
+    localStartOfDay.setUTCHours(0, 0, 0, 0); // Find pure UTC Midnight of this shifted representation
+    const localEndOfDay = new Date(localStartEpoch);
+    localEndOfDay.setUTCHours(23, 59, 59, 999);
+    
+    // Shift the determined midnight boundaries safely back to proper UTC absolute format for MongoDB querying
+    const startOfDay = new Date(localStartOfDay.getTime() + offsetMs);
+    const endOfDay = new Date(localEndOfDay.getTime() + offsetMs);
+
+    const dailySessions = await Session.find({
+      status: { $in: ["scheduled", "active"] },
+      $or: [{ interviewer }, { candidate }],
+      scheduledAt: { $gte: startOfDay, $lte: endOfDay }
+    });
+
+    const interviewerSessions = dailySessions.filter(s => s.interviewer.toString() === interviewer || s.candidate.toString() === interviewer);
+    const candidateSessions = dailySessions.filter(s => s.interviewer.toString() === candidate || s.candidate.toString() === candidate);
+
+    const getLocalHour = (utcDateString) => {
+       const epoch = new Date(utcDateString).getTime() - offsetMs;
+       return new Date(epoch).getUTCHours();
+    };
+
+    const validateDailyLimit = (sessions, roleName) => {
+      if (sessions.length >= 2) return `${roleName} already has a maximum of 2 interviews scheduled for this day.`;
+      
+      if (sessions.length === 1) {
+        const existingSession = sessions[0];
+        
+        // Ensure 1.5 Hour Gap Validation (90 minutes = 5,400,000 ms)
+        const MIN_GAP_MS = 90 * 60 * 1000;
+        const existingStartTs = new Date(existingSession.scheduledAt).getTime();
+        const existingEndTs = existingStartTs + (existingSession.duration * 60000);
+        
+        // Check if new session ends before existing gap triggers, OR starts after existing gap expires
+        const isSafeBefore = (end.getTime() + MIN_GAP_MS) <= existingStartTs;
+        const isSafeAfter = start.getTime() >= (existingEndTs + MIN_GAP_MS);
+        
+        if (!isSafeBefore && !isSafeAfter) {
+           return `${roleName} must have at least a 1.5-hour gap between their two daily interviews.`;
+        }
+
+        const existingSessionHour = getLocalHour(existingSession.scheduledAt);
+        const newSessionHour = getLocalHour(scheduledAt);
+        
+        const existingIsMorning = existingSessionHour < 12;
+        const newIsMorning = newSessionHour < 12;
+        
+        if (existingIsMorning && newIsMorning) {
+          return `${roleName} already has a morning interview on this day. The second interview must be scheduled in the afternoon (12:00 PM or later).`;
+        }
+        if (!existingIsMorning && !newIsMorning) {
+          return `${roleName} already has an afternoon interview on this day. The second interview must be scheduled in the morning (before 12:00 PM).`;
+        }
+      }
+      return null;
+    };
+
+    const interviewerError = validateDailyLimit(interviewerSessions, "Interviewer");
+    if (interviewerError) return res.status(400).json({ message: interviewerError });
+
+    const candidateError = validateDailyLimit(candidateSessions, "Candidate");
+    if (candidateError) return res.status(400).json({ message: candidateError });
+
+    // 4. Check for Overlapping Sessions (Interviewer or Candidate)
+    const conflict = await Session.findOne({
+      status: { $in: ["scheduled", "active"] },
+      $or: [
+        { interviewer },
+        { candidate },
+        { interviewer: candidate }, // Ensure they aren't interviewing themselves (safety)
+      ],
+      $or: [
+        { scheduledAt: { $lt: end, $gte: start } }, // New session starts during an old one
+        { $and: [
+          { scheduledAt: { $lte: start } }, 
+          { $expr: { $gt: [{ $add: ["$scheduledAt", { $multiply: ["$duration", 60000] }] }, start] } }
+        ]} // Old session spans across the new start
+      ]
+    });
+
+    if (conflict) {
+      const actor = conflict.interviewer.toString() === interviewer ? "Interviewer" : "Candidate";
+      return res.status(400).json({ message: `${actor} already has an active session during this time.` });
     }
 
     const interviewerToken = crypto.randomBytes(16).toString("hex");
@@ -51,6 +175,24 @@ export async function scheduleSession(req, res) {
       interviewerLink,
       candidateLink,
     });
+
+    // Create In-App Notifications
+    await Notification.insertMany([
+      {
+        userId: interviewerDoc._id,
+        type: "session_scheduled",
+        title: "New Interview Scheduled",
+        message: `You have been scheduled to interview ${candidateDoc.name} for the problem "${problemDoc.title}".`,
+        link: `/session/${session._id}`
+      },
+      {
+        userId: candidateDoc._id,
+        type: "session_scheduled",
+        title: "Interview Scheduled",
+        message: `Your interview with ${interviewerDoc.name} for the problem "${problemDoc.title}" has been scheduled.`,
+        link: `/session/${session._id}`
+      }
+    ]);
 
     res.status(201).json({ session });
   } catch (error) {
@@ -160,6 +302,7 @@ export async function joinSession(req, res) {
 export async function endSession(req, res) {
   try {
     const { id } = req.params;
+    const { finalCode, finalLanguage } = req.body;
     const userId = req.user._id.toString();
 
     const session = await Session.findById(id);
@@ -188,6 +331,8 @@ export async function endSession(req, res) {
     }
 
     session.status = "completed";
+    if (finalCode) session.finalCode = finalCode;
+    if (finalLanguage) session.finalLanguage = finalLanguage;
     await session.save();
 
     res.status(200).json({ session, message: "Session ended successfully" });
@@ -256,7 +401,37 @@ export async function cancelSession(req, res) {
     session.status = "cancelled";
     await session.save();
 
-    // Optionally: trigger Resend email to Candidate and Interviewer here
+    // Notify Interviewer and Candidate via Email
+    const interviewerDoc = await User.findById(session.interviewer);
+    const candidateDoc = await User.findById(session.candidate);
+    const problemDoc = await Problem.findById(session.problem);
+
+    if (interviewerDoc && candidateDoc && problemDoc) {
+      await sendCancellationNotice({
+        interviewerEmail: interviewerDoc.email,
+        interviewerName: interviewerDoc.name,
+        candidateEmail: candidateDoc.email,
+        candidateName: candidateDoc.name,
+        problemTitle: problemDoc.title,
+        scheduledAt: session.scheduledAt,
+      });
+
+      // Create In-App Notifications
+      await Notification.insertMany([
+        {
+          userId: interviewerDoc._id,
+          type: "session_cancelled",
+          title: "Interview Cancelled",
+          message: `The interview with ${candidateDoc.name} for "${problemDoc.title}" has been cancelled.`
+        },
+        {
+          userId: candidateDoc._id,
+          type: "session_cancelled",
+          title: "Interview Cancelled",
+          message: `Your interview with ${interviewerDoc.name} for "${problemDoc.title}" has been cancelled.`
+        }
+      ]);
+    }
 
     res.status(200).json({ session, message: "Session cancelled successfully" });
   } catch (error) {

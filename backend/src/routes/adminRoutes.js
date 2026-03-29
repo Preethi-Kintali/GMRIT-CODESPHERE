@@ -1,7 +1,7 @@
 import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js";
 import { requireAdmin } from "../middleware/requireRole.js";
-import { getAdminStats, getInterviewers, getCandidates, promoteToInterviewer, getAllSessions } from "../controllers/adminController.js";
+import { getAdminStats, getInterviewers, getCandidates, promoteToInterviewer, getAllSessions, demoteInterviewer } from "../controllers/adminController.js";
 import { getAdminProblems, createProblem, updateProblem } from "../controllers/problemController.js";
 
 const router = express.Router();
@@ -13,6 +13,7 @@ router.get("/sessions", getAllSessions);
 router.get("/interviewers", getInterviewers);
 router.get("/candidates", getCandidates);
 router.post("/interviewers", promoteToInterviewer);
+router.delete("/interviewers/:id", demoteInterviewer);
 
 router.get("/problems", getAdminProblems);
 router.post("/problems", createProblem);

@@ -27,7 +27,7 @@ cron.schedule("*/15 * * * *", async () => {
       return;
     }
 
-    console.log(`Found \${upcomingSessions.length} upcoming sessions. Sending reminders...`);
+    console.log(`Found ${upcomingSessions.length} upcoming sessions. Sending reminders...`);
 
     for (const session of upcomingSessions) {
       const interviewerDoc = await User.findById(session.interviewer);
@@ -37,8 +37,8 @@ cron.schedule("*/15 * * * *", async () => {
       if (!interviewerDoc || !candidateDoc || !problemDoc) continue;
 
       const baseUrl = ENV.CLIENT_URL || "http://localhost:5173";
-      const interviewerLink = `\${baseUrl}/session/\${session._id}?token=\${session.interviewerToken}`;
-      const candidateLink = `\${baseUrl}/session/\${session._id}?token=\${session.candidateToken}`;
+      const interviewerLink = `${baseUrl}/session/${session._id}?token=${session.interviewerToken}`;
+      const candidateLink = `${baseUrl}/session/${session._id}?token=${session.candidateToken}`;
 
       // Re-using the sendInterviewInvite function for the reminder
       await sendInterviewInvite({
@@ -53,7 +53,7 @@ cron.schedule("*/15 * * * *", async () => {
         candidateLink,
       });
 
-      console.log(`Sent reminder for session \${session._id}`);
+      console.log(`Sent reminder for session ${session._id}`);
     }
   } catch (error) {
     console.error("Error in reminder cron job:", error);

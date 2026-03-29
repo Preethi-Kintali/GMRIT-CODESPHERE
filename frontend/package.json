@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,7 +20,9 @@
     "date-fns": "^4.1.0",
     "gmrit-codesphere": "file:..",
     "lucide-react": "^0.548.0",
+    "prismjs": "^1.30.0",
     "react": "^19.1.1",
+    "react-calendar": "^6.0.0",
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.6.0",
     "react-resizable-panels": "^3.0.6",

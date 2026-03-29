@@ -87,7 +87,7 @@ function SessionPage() {
   useEffect(() => {
     if (!session || !user || loadingSession) return;
     
-    const backendUrl = import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
+    const backendUrl = import.meta.env.MODE === "development" ? "http://localhost:3000" : "/";
     socketRef.current = io(backendUrl);
     socketRef.current.emit("join_session", id);
 
@@ -160,7 +160,10 @@ function SessionPage() {
   const handleEndSession = () => {
     if (confirm("Are you sure you want to end this session? All participants will be notified.")) {
       // this will navigate the Interviewer to the feedback page
-      endSessionMutation.mutate(id, { onSuccess: () => navigate(`/session/${id}/feedback`) });
+      endSessionMutation.mutate(
+        { id, finalCode: code, finalLanguage: selectedLanguage },
+        { onSuccess: () => navigate(`/session/${id}/feedback`) }
+      );
     }
   };
 
