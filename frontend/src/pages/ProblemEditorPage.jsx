@@ -3,7 +3,7 @@ import axiosInstance from "../lib/axios";
 import { toast } from "react-hot-toast";
 import { useParams, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Code2Icon, LoaderIcon } from "lucide-react";
+import { Code2Icon, LoaderIcon, SendIcon } from "lucide-react";
 
 export default function ProblemEditorPage() {
   const { id } = useParams();
@@ -20,6 +20,7 @@ export default function ProblemEditorPage() {
   });
 
   const [activeTab, setActiveTab] = useState("info");
+  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
 
   const { data: problems, isLoading } = useQuery({
     queryKey: ["admin-problems"],
@@ -42,6 +43,15 @@ export default function ProblemEditorPage() {
       }
     }
   }, [isEditMode, problems, id]);
+
+  if (isEditMode && isLoading) {
+    return (
+      <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
+        <LoaderIcon className="size-8 text-primary animate-spin" />
+        <p className="text-neutral-500 font-medium animate-pulse">Syncing problem data...</p>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -154,49 +164,101 @@ export default function ProblemEditorPage() {
               </div>
             </>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span>
-                  Starter Code
-                </h3>
-                {["javascript", "python", "java"].map((lang) => (
-                  <div key={lang} className="group">
-                    <label className="block text-[9px] font-bold text-neutral-500 uppercase tracking-widest mb-2 pl-1">{lang}</label>
-                    <textarea
-                      value={formData.starterCode[lang]}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        starterCode: { ...formData.starterCode, [lang]: e.target.value }
-                      })}
-                      rows={5}
-                      placeholder={`Enter ${lang} implementation template...`}
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 group-hover:border-white/20 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all font-mono text-xs placeholder:text-neutral-600"
-                    />
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                {/* STARTER CODE EDITOR */}
+                <div className="lg:col-span-3 space-y-4">
+                  <div className="flex items-center justify-between pl-1">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-3">
+                      <Code2Icon className="size-4 text-emerald-400" />
+                      Starter Template
+                    </h3>
+                    
+                    {/* PREMIUM DROPDOWN */}
+                    <div className="relative group/select">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-focus-within/select:text-emerald-400">
+                        <div className={`size-5 rounded flex items-center justify-center text-[8px] font-black border border-white/10 bg-black ${
+                          selectedLanguage === 'javascript' ? 'text-[#f7df1e]' : 
+                          selectedLanguage === 'python' ? 'text-[#3776ab]' : 'text-[#007396]'
+                        }`}>
+                          {selectedLanguage === 'javascript' ? 'JS' : selectedLanguage === 'python' ? 'PY' : 'JV'}
+                        </div>
+                      </div>
+                      <select
+                        value={selectedLanguage}
+                        onChange={(e) => setSelectedLanguage(e.target.value)}
+                        className="pl-10 pr-8 py-1.5 bg-[#252525] border border-white/5 rounded-lg text-[10px] font-bold text-neutral-300 hover:text-white hover:border-white/20 transition-all outline-none appearance-none cursor-pointer uppercase tracking-widest min-w-[140px]"
+                      >
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500 group-hover/select:text-white transition-colors">
+                        <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
+                  
+                  <div className={`rounded-3xl border-2 transition-all p-1 bg-black/40 ${
+                    selectedLanguage === 'javascript' ? 'border-[#f7df1e]/20' : 
+                    selectedLanguage === 'python' ? 'border-[#3776ab]/20' : 'border-[#007396]/20'
+                  }`}>
+                    <textarea
+                        value={formData.starterCode[selectedLanguage]}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          starterCode: { ...formData.starterCode, [selectedLanguage]: e.target.value }
+                        })}
+                        rows={18}
+                        placeholder={`Define the initial structure for ${selectedLanguage}...`}
+                        className="w-full px-6 py-6 bg-transparent rounded-2xl text-white focus:outline-none font-mono text-xs leading-relaxed custom-scrollbar placeholder:text-neutral-800"
+                      />
+                  </div>
+                </div>
 
-              <div className="space-y-6">
-                <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
-                  Expected Output
-                </h3>
-                {["javascript", "python", "java"].map((lang) => (
-                  <div key={lang} className="group">
-                    <label className="block text-[9px] font-bold text-neutral-500 uppercase tracking-widest mb-2 pl-1">{lang} Output</label>
-                    <textarea
-                      value={formData.expectedOutput[lang]}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        expectedOutput: { ...formData.expectedOutput, [lang]: e.target.value }
-                      })}
-                      rows={5}
-                      placeholder={`Enter exact expected output for ${lang}...`}
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 group-hover:border-white/20 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all font-mono text-xs placeholder:text-neutral-600"
-                    />
+                {/* UNIVERSAL EXPECTED OUTPUT */}
+                <div className="lg:col-span-2 space-y-4">
+                   <div className="flex items-center justify-between pl-1">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-3">
+                      <SendIcon className="size-4 text-blue-500" />
+                      Universal Output
+                    </h3>
+                    <span className="text-[10px] font-mono text-blue-500/70 border border-blue-500/20 bg-blue-500/5 px-2 py-0.5 rounded uppercase tracking-widest">
+                      Single Match
+                    </span>
                   </div>
-                ))}
+
+                  <div className="card bg-[#1a1a1a] border border-white/5 rounded-3xl p-6 space-y-4 shadow-2xl h-full flex flex-col">
+                    <p className="text-[11px] text-neutral-500 leading-relaxed italic">
+                      Author the exact string output required to pass the test case. This value is shared across all environments.
+                    </p>
+                    
+                    <textarea
+                        value={formData.expectedOutput.javascript || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData({
+                            ...formData,
+                            expectedOutput: { 
+                              javascript: val,
+                              python: val,
+                              java: val
+                            }
+                          });
+                        }}
+                        rows={12}
+                        placeholder={`Paste the expected output here...`}
+                        className="w-full flex-1 px-5 py-5 bg-black/60 border border-white/5 rounded-2xl text-white focus:outline-none focus:border-blue-500/30 font-mono text-xs leading-relaxed custom-scrollbar placeholder:text-neutral-800"
+                    />
+
+                    <div className="bg-blue-500/5 border border-blue-500/10 p-4 rounded-xl flex items-center gap-3">
+                      <div className="size-2 rounded-full bg-blue-500 animate-pulse"></div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-blue-400">Sync Active Across Runtimes</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
