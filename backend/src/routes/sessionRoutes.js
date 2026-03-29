@@ -11,6 +11,7 @@ import {
   submitFeedback,
   cancelSession,
   verifySessionOtp,
+  sendSessionOtp,
   submitCandidateFeedback,
   recordViolation,
   terminateByViolation,
