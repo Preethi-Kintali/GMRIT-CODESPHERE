@@ -9,23 +9,25 @@ export const protectRoute = [
       if (!clerkId)
         return res.status(401).json({ message: "Unauthorized - invalid token" });
 
-      //   find user in db by clerk Id
+      // find user in db by clerk Id
       let user = await User.findOne({ clerkId });
       
-      // Auto-sync user if they are missing in the DB but authenticated via Clerk
-      // This fixes vanished users if the DB was wiped or webhook failed.
-      if (!user) {
-        const clerkUser = await clerkClient.users.getUser(clerkId);
-        const metadataRole = clerkUser.publicMetadata?.role || "candidate";
-        const email = clerkUser.emailAddresses?.[0]?.emailAddress || "";
-        const name = `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || "User";
-        const profileImage = clerkUser.imageUrl || "";
+      const clerkUser = await clerkClient.users.getUser(clerkId).catch(() => null);
+      if (!clerkUser) return res.status(401).json({ message: "Clerk user not found" });
 
+      const email = clerkUser.emailAddresses?.[0]?.emailAddress || "";
+      const name = `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || "User";
+      const profileImage = clerkUser.imageUrl || "";
+      const metadataRole = clerkUser.publicMetadata?.role || "candidate";
+
+      // If user doesn't exist, create/upsert
+      if (!user) {
         user = await User.findOneAndUpdate(
-          { email },
+          { $or: [{ clerkId }, { email }] },
           {
             $set: {
               clerkId,
+              email,
               name,
               profileImage,
               role: metadataRole,
@@ -33,11 +35,22 @@ export const protectRoute = [
           },
           { new: true, upsert: true }
         );
+      } else {
+        // If user exists, check for staleness
+        const isStale = user.email !== email || user.name !== name || user.profileImage !== profileImage || user.role !== metadataRole;
+        if (isStale) {
+          user.email = email;
+          user.name = name;
+          user.profileImage = profileImage;
+          user.role = metadataRole;
+          await user.save();
+        }
       }
 
-      //   attach user to req
+      // attach user to req
       req.user = user;
       next();
+
     } catch (error) {
       console.error("Error in protectRoute middleware:", error);
       res.status(500).json({ message: "Internal Server Error" });

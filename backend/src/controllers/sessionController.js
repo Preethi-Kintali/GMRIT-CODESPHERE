@@ -309,11 +309,20 @@ export async function joinSession(req, res) {
     // 3. Activation Guard (Only activate at or after start time)
     const now = new Date();
     const scheduledTime = new Date(session.scheduledAt);
+    const lifecycleExpiry = new Date(scheduledTime.getTime() + (4 * 60 * 60 * 1000)); // 4 hours limit
+
+    if (now > lifecycleExpiry && session.status !== "completed") {
+      session.status = "completed";
+      session.autoCompleted = true; // Mark as lifecycle expired
+      await session.save();
+      return res.status(403).json({ message: "This session has expired and is no longer accessible." });
+    }
 
     if (session.status === "scheduled" && now >= scheduledTime) {
       session.status = "active";
       await session.save();
     }
+
 
     // Add user to the Stream chat channel
     const channel = chatClient.channel("messaging", session.callId);
@@ -362,7 +371,13 @@ export async function endSession(req, res) {
     if (finalLanguage) session.finalLanguage = finalLanguage;
     await session.save();
 
+    const io = req.app.get("io");
+    if (io) {
+      io.to(id).emit("session_ended", { finalCode, finalLanguage });
+    }
+
     res.status(200).json({ session, message: "Session ended successfully" });
+
   } catch (error) {
     console.error("Error in endSession:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -624,15 +639,18 @@ export async function recordViolation(req, res) {
     session.violationCount = (session.violationCount || 0) + 1;
     await session.save();
 
+    const isLimitReached = session.violationCount >= 3;
+
     // Notify interviewer via Notification
     await Notification.create({
       userId: session.interviewer,
-      type: "violation_warning",
-      title: "Security Violation Alert",
-      message: `Candidate ${type}: ${message} (Total: ${session.violationCount})`,
+      type: isLimitReached ? "violation_critical" : "violation_warning",
+      title: isLimitReached ? "CRITICAL: Security Breach" : "Security Violation Alert",
+      message: `Candidate ${type}: ${message} (Total: ${session.violationCount}). ${isLimitReached ? "Mandatory termination required." : ""}`,
     });
 
-    res.status(200).json({ violationCount: session.violationCount });
+    res.status(200).json({ violationCount: session.violationCount, isLimitReached });
+
   } catch (error) {
     console.error("Error in recordViolation:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -674,7 +692,13 @@ export async function terminateByViolation(req, res) {
     session.terminationReason = reason || "Security Policy Breach (3+ Fullscreen Violations)";
     await session.save();
 
+    const io = req.app.get("io");
+    if (io) {
+      io.to(id).emit("session_terminated", { reason: session.terminationReason });
+    }
+
     // Offload via Inngest
+
     await inngest.send({
       name: "session/terminated",
       data: {
@@ -722,6 +746,9 @@ export async function checkIn(req, res) {
     }
 
     if (session.interviewer.toString() === userId) {
+      if (!session.isInterviewerVerified) {
+        return res.status(401).json({ message: "Interviewer must be verified (OTP) before checking in" });
+      }
       session.interviewerCheckedIn = true;
       session.interviewerCheckedInAt = new Date();
     } else if (session.candidate.toString() === userId) {
@@ -731,6 +758,7 @@ export async function checkIn(req, res) {
       session.candidateCheckedIn = true;
       session.candidateCheckedInAt = new Date();
     } else {
+
       return res.status(403).json({ message: "Unauthorized check-in attempt" });
     }
 

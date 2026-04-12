@@ -68,6 +68,14 @@ export const promoteToInterviewer = async (req, res) => {
       return res.status(404).json({ message: "User not found with this email." });
     }
 
+    if (user.role === "interviewer") {
+      return res.status(400).json({ message: "User is already an interviewer." });
+    }
+    if (user.role === "admin") {
+      return res.status(400).json({ message: "Cannot modify role of another admin." });
+    }
+
+
     // Update in MongoDB
     user.role = "interviewer";
     if (department) user.department = department;
@@ -130,9 +138,13 @@ export const demoteInterviewer = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
+    if (user.role === "candidate") {
+      return res.status(400).json({ message: "User is already a candidate." });
+    }
     if (user.role === "admin") {
        return res.status(400).json({ message: "Cannot demote an admin." });
     }
+
 
     // Update in MongoDB
     user.role = "candidate";

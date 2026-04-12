@@ -20,6 +20,8 @@ import FeedbackPage from "./pages/FeedbackPage";
 import CandidateFeedbackPage from "./pages/CandidateFeedbackPage";
 import InterviewerCalendarPage from "./pages/InterviewerCalendarPage";
 import ProfilePage from "./pages/ProfilePage";
+import NotFoundPage from "./pages/NotFoundPage";
+
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -158,7 +160,9 @@ function App() {
             </AdminRoute>
           }
         />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
+
 
       <Toaster toastOptions={{ duration: 3000 }} />
     </>

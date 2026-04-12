@@ -66,7 +66,9 @@ const sessionSchema = new mongoose.Schema(
     candidateCheckedIn: { type: Boolean, default: false },
     interviewerCheckedInAt: { type: Date },
     candidateCheckedInAt: { type: Date },
+    autoCompleted: { type: Boolean, default: false },
   },
+
   {
     timestamps: true,
   }

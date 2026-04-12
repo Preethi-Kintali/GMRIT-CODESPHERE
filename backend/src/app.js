@@ -7,6 +7,9 @@ import { Server } from "socket.io";
 import cors from "cors";
 import { serve } from "inngest/express";
 import { clerkMiddleware } from "@clerk/express";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
+
 
 import { ENV } from "./lib/env.js";
 import { connectDB } from "./lib/db.js";
@@ -19,18 +22,21 @@ import webhookRoutes from "./routes/webhookRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import problemRoutes from "./routes/problemRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import { errorMiddleware } from "./middleware/errorMiddleware.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+
 
 const PORT = ENV.PORT;
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ENV.CLIENT_URL || "http://localhost:5173",
+    origin: ENV.CLIENT_URL,
     methods: ["GET", "POST"],
     credentials: true,
   }
 });
+
 
 io.on("connection", (socket) => {
   console.log("User connected to socket:", socket.id);
@@ -58,14 +64,32 @@ io.on("connection", (socket) => {
 
 const __dirname = path.resolve();
 
+app.set("io", io);
+
 // webhooks must be parsed as raw body
+
 app.use("/api/webhooks", webhookRoutes);
 
 // middlewares
+app.use(helmet({
+  contentSecurityPolicy: false, // Turn off CSP if it interferes with Clerk/Stream, but usually good to keep on and configure
+}));
 app.use(express.json());
+
+// rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: "Too many requests, please try again later." }
+});
+app.use("/api", limiter);
+
 // credentials: true meaning?? => server allows a browser to include cookies on request
 app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 app.use(clerkMiddleware()); // this add auth field to requesr object: req.auth()
+
 
 app.use("/api/inngest", serve({ client: inngest, functions }));
 app.use("/api/chat", chatRoutes);
@@ -89,7 +113,11 @@ if (ENV.NODE_ENV === "production") {
   });
 }
 
+// Catch-all error handler (Must be last)
+app.use(errorMiddleware);
+
 const startServer = async () => {
+
   try {
     await connectDB();
     server.listen(PORT, () => {
@@ -103,8 +131,10 @@ const startServer = async () => {
       }
     });
   } catch (error) {
-    console.error("Error starting the server");
+    console.error("❌ CRITICAL: Error starting the server:", error);
+    process.exit(1);
   }
 };
+
 
 startServer();

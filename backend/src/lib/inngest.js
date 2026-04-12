@@ -63,8 +63,10 @@ const handleSessionScheduled = inngest.createFunction(
     const { params, notifications } = event.data;
     
     // Send Emails
-    await sendInterviewInvite(params);
+    const emailResult = await sendInterviewInvite(params);
+    if (emailResult.error) throw new Error(`Email failed: ${emailResult.error.message || 'Unknown error'}`);
     console.log("Inngest: Invitation emails sent.");
+
     
     // Create Notifications
     await Notification.insertMany(notifications);
@@ -79,8 +81,10 @@ const handleSessionCancelled = inngest.createFunction(
     await connectDB();
     const { params, notifications } = event.data;
     
-    await sendCancellationNotice(params);
+    const emailResult = await sendCancellationNotice(params);
+    if (emailResult.error) throw new Error(`Email failed: ${emailResult.error.message || 'Unknown error'}`);
     console.log("Inngest: Cancellation emails sent.");
+
     await Notification.insertMany(notifications);
   }
 );
@@ -93,8 +97,10 @@ const handleSessionTerminated = inngest.createFunction(
     await connectDB();
     const { params, notifications } = event.data;
     
-    await sendSecurityTerminationNotice(params);
+    const emailResult = await sendSecurityTerminationNotice(params);
+    if (emailResult.error) throw new Error(`Email failed: ${emailResult.error.message || 'Unknown error'}`);
     console.log("Inngest: Termination emails sent.");
+
     await Notification.insertMany(notifications);
   }
 );
@@ -107,8 +113,10 @@ const handleSessionOtp = inngest.createFunction(
     await connectDB();
     const { emailParams, notificationParams } = event.data;
     
-    await sendEmailOtp(emailParams);
+    const emailResult = await sendEmailOtp(emailParams);
+    if (emailResult.error) throw new Error(`Email failed: ${emailResult.error.message || 'Unknown error'}`);
     console.log("Inngest: OTP email sent.");
+
     await Notification.create(notificationParams);
   }
 );
@@ -121,8 +129,10 @@ const handleRoleChange = inngest.createFunction(
     await connectDB();
     const { emailParams, notificationParams } = event.data;
     
-    await sendRoleNotice(emailParams);
+    const emailResult = await sendRoleNotice(emailParams);
+    if (emailResult.error) throw new Error(`Email failed: ${emailResult.error.message || 'Unknown error'}`);
     console.log("Inngest: Role change email sent.");
+
     if (notificationParams) {
       await Notification.create(notificationParams);
     }

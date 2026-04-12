@@ -166,35 +166,49 @@ export const sendInterviewInvite = async (params) => {
   const interviewerHtml = await render(React.createElement(InvitationTemplate, { ...params, role: 'interviewer' }));
   const candidateHtml = await render(React.createElement(InvitationTemplate, { ...params, role: 'candidate' }));
 
-  return await sendInvite({ 
-    to: params.interviewerEmail, 
-    subject: "Interview Invitation", 
-    html: interviewerHtml,
-    from: EMAIL_FROM
-  }).then(() => sendInvite({ 
-    to: params.candidateEmail, 
-    subject: "Interview Invitation", 
-    html: candidateHtml,
-    from: EMAIL_FROM 
-  }));
+  const results = await Promise.all([
+    sendInvite({ 
+      to: params.interviewerEmail, 
+      subject: "Interview Invitation", 
+      html: interviewerHtml,
+      from: EMAIL_FROM
+    }),
+    sendInvite({ 
+      to: params.candidateEmail, 
+      subject: "Interview Invitation", 
+      html: candidateHtml,
+      from: EMAIL_FROM 
+    })
+  ]);
+
+  const error = results.find(r => r.error);
+  return error ? error : { success: true };
 };
+
 
 export const sendCancellationNotice = async (params) => {
   const interviewerHtml = await render(React.createElement(CancellationTemplate, { ...params, role: 'interviewer' }));
   const candidateHtml = await render(React.createElement(CancellationTemplate, { ...params, role: 'candidate' }));
 
-  return await sendInvite({ 
-    to: params.interviewerEmail, 
-    subject: "CANCELLED: Interview Invitation", 
-    html: interviewerHtml,
-    from: EMAIL_FROM
-  }).then(() => sendInvite({ 
-    to: params.candidateEmail, 
-    subject: "CANCELLED: Interview Invitation", 
-    html: candidateHtml,
-    from: EMAIL_FROM
-  }));
+  const results = await Promise.all([
+    sendInvite({ 
+      to: params.interviewerEmail, 
+      subject: "CANCELLED: Interview Invitation", 
+      html: interviewerHtml,
+      from: EMAIL_FROM
+    }),
+    sendInvite({ 
+      to: params.candidateEmail, 
+      subject: "CANCELLED: Interview Invitation", 
+      html: candidateHtml,
+      from: EMAIL_FROM
+    })
+  ]);
+
+  const error = results.find(r => r.error);
+  return error ? error : { success: true };
 };
+
 
 const OTPTemplate = (props) => {
   const { userName, otpCode } = props;
@@ -300,15 +314,22 @@ export const sendSecurityTerminationNotice = async (params) => {
   const interviewerHtml = await render(React.createElement(SecurityTerminationTemplate, { ...params, role: 'interviewer' }));
   const candidateHtml = await render(React.createElement(SecurityTerminationTemplate, { ...params, role: 'candidate' }));
 
-  return await sendInvite({
-    to: params.interviewerEmail,
-    subject: "URGENT: Interview Terminated due to Security Violations",
-    html: interviewerHtml,
-    from: EMAIL_FROM
-  }).then(() => sendInvite({
-    to: params.candidateEmail,
-    subject: "TERMINATED: Security Violation Policy Breach",
-    html: candidateHtml,
-    from: EMAIL_FROM
-  }));
+  const results = await Promise.all([
+    sendInvite({
+      to: params.interviewerEmail,
+      subject: "URGENT: Interview Terminated due to Security Violations",
+      html: interviewerHtml,
+      from: EMAIL_FROM
+    }),
+    sendInvite({
+      to: params.candidateEmail,
+      subject: "TERMINATED: Security Violation Policy Breach",
+      html: candidateHtml,
+      from: EMAIL_FROM
+    })
+  ]);
+
+  const error = results.find(r => r.error);
+  return error ? error : { success: true };
 };
+

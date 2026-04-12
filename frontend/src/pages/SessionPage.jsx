@@ -205,8 +205,20 @@ function SessionPage() {
       setOutput(output);
       setIsRunning(false);
     });
+    
+    socketRef.current.on("session_ended", () => {
+       toast.success("Session concluded by interviewer.");
+       refetch();
+       // Navigation happens via session.status useEffect
+    });
+
+    socketRef.current.on("session_terminated", ({ reason }) => {
+       toast.error(`TERMINATED: ${reason}`);
+       refetch();
+    });
 
     return () => {
+
       if (socketRef.current) socketRef.current.disconnect();
     };
   }, [session, user, loadingSession, id]);
