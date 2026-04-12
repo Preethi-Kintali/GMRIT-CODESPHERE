@@ -1,14 +1,9 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-dotenv.config();
-
 import { ENV } from './env.js';
 
+/**
+ * Standardized Email Transporter (Production Verified)
+ */
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   host: 'smtp.gmail.com',
@@ -21,14 +16,14 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function sendInvite({ to, subject, html, from }) {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    console.error('❌ Gmail credentials missing – cannot send email');
+  if (!ENV.GMAIL_USER || !ENV.GMAIL_APP_PASSWORD) {
+    console.error('❌ Gmail credentials missing in ENV – cannot send email');
     return { error: 'Missing credentials' };
   }
   
   try {
     const info = await transporter.sendMail({
-      from: from || `GMRIT CodeSphere <${process.env.GMAIL_USER}>`,
+      from: from || `GMRIT CodeSphere <${ENV.GMAIL_USER}>`,
       to,
       subject,
       html,

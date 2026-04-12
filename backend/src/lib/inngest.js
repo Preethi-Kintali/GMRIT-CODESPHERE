@@ -14,8 +14,8 @@ import { ENV } from "./env.js";
 
 export const inngest = new Inngest({ 
   id: "GMRIT-CodeSphere",
-  eventKey: ENV.INNGEST_EVENT_KEY,
-  signingKey: ENV.INNGEST_SIGNING_KEY
+  eventKey: ENV.INNGEST_EVENT_KEY || undefined,
+  signingKey: ENV.INNGEST_SIGNING_KEY || undefined
 });
 
 const syncUser = inngest.createFunction(
