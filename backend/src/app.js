@@ -94,6 +94,13 @@ const startServer = async () => {
     await connectDB();
     server.listen(PORT, () => {
       console.log(`server is running on port ${PORT}`);
+      
+      // Production Email Diagnostics
+      if (ENV.GMAIL_USER && ENV.GMAIL_APP_PASSWORD) {
+        console.log(`✅ Production Email System: READY (User: ${ENV.GMAIL_USER})`);
+      } else {
+        console.warn('⚠️ Production Email System: CREDENTIALS MISSING! Check Render Environment Variables.');
+      }
     });
   } catch (error) {
     console.error("Error starting the server");
