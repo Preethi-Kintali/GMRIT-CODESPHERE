@@ -1,11 +1,22 @@
 import { Inngest } from "inngest";
 import { connectDB } from "./db.js";
 import User from "../models/User.js";
-import { deleteStreamUser, upsertStreamUser } from "./stream.js";
-import { sendInterviewInvite, sendCancellationNotice, sendEmailOtp, sendSecurityTerminationNotice, sendRoleNotice } from "./email.js";
 import Notification from "../models/Notification.js";
+import { upsertStreamUser, deleteStreamUser } from "./stream.js";
+import { 
+  sendInterviewInvite, 
+  sendCancellationNotice, 
+  sendSecurityTerminationNotice, 
+  sendEmailOtp, 
+  sendRoleNotice 
+} from "./email.js";
+import { ENV } from "./env.js";
 
-export const inngest = new Inngest({ id: "GMRIT-CodeSphere" });
+export const inngest = new Inngest({ 
+  id: "GMRIT-CodeSphere",
+  eventKey: ENV.INNGEST_EVENT_KEY,
+  signingKey: ENV.INNGEST_SIGNING_KEY
+});
 
 const syncUser = inngest.createFunction(
   { id: "sync-user" },
