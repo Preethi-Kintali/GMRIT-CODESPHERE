@@ -5,6 +5,8 @@ import Problem from "../models/Problem.js";
 import crypto from "crypto";
 import { inngest } from "../lib/inngest.js";
 import { ENV } from "../lib/env.js";
+import { sendInterviewInvite, sendCancellationNotice, sendEmailOtp } from "../lib/email.js";
+import Notification from "../models/Notification.js";
 
 export async function scheduleSession(req, res) {
   try {
@@ -162,39 +164,38 @@ export async function scheduleSession(req, res) {
     const interviewerLink = `${baseUrl}/session/${session._id}?token=${interviewerToken}`;
     const candidateLink = `${baseUrl}/session/${session._id}?token=${candidateToken}`;
 
-    // Offload Emails and Notifications to Inngest
-    await inngest.send({
-      name: "session/scheduled",
-      data: {
-        params: {
-          interviewerEmail: interviewerDoc.email,
-          interviewerName: interviewerDoc.name,
-          candidateEmail: candidateDoc.email,
-          candidateName: candidateDoc.name,
-          problemTitle: problemDoc.title,
-          scheduledAt: session.scheduledAt,
-          duration: session.duration,
-          interviewerLink,
-          candidateLink,
-        },
-        notifications: [
-          {
-            userId: interviewerDoc._id,
-            type: "session_scheduled",
-            title: "New Interview Scheduled",
-            message: `You have been scheduled to interview ${candidateDoc.name} for the problem "${problemDoc.title}".`,
-            link: `/session/${session._id}`
-          },
-          {
-            userId: candidateDoc._id,
-            type: "session_scheduled",
-            title: "Interview Scheduled",
-            message: `Your interview with ${interviewerDoc.name} for the problem "${problemDoc.title}" has been scheduled.`,
-            link: `/session/${session._id}`
-          }
-        ]
-      }
+    // Direct Email Send (Temporary Bypass to verify Gmail connection)
+    console.log("Direct Send: Attempting to send emails for session", session._id);
+    const emailResult = await sendInterviewInvite({
+      interviewerEmail: interviewerDoc.email,
+      interviewerName: interviewerDoc.name,
+      candidateEmail: candidateDoc.email,
+      candidateName: candidateDoc.name,
+      problemTitle: problemDoc.title,
+      scheduledAt: session.scheduledAt,
+      duration: session.duration,
+      interviewerLink,
+      candidateLink,
     });
+    console.log("Direct Send Result:", emailResult);
+
+    // Create Notifications
+    await Notification.insertMany([
+      {
+        userId: interviewerDoc._id,
+        type: "session_scheduled",
+        title: "New Interview Scheduled",
+        message: `You have been scheduled to interview ${candidateDoc.name} for the problem "${problemDoc.title}".`,
+        link: `/session/${session._id}`
+      },
+      {
+        userId: candidateDoc._id,
+        type: "session_scheduled",
+        title: "Interview Scheduled",
+        message: `Your interview with ${interviewerDoc.name} for the problem "${problemDoc.title}" has been scheduled.`,
+        link: `/session/${session._id}`
+      }
+    ]);
 
     res.status(201).json({ session });
   } catch (error) {
@@ -502,22 +503,19 @@ export async function sendSessionOtp(req, res) {
     
     await session.save();
 
-    // Offload via Inngest
-    await inngest.send({
-      name: "session/otp",
-      data: {
-        emailParams: {
-          userEmail: targetUser.email,
-          userName: targetUser.name,
-          otpCode: otp
-        },
-        notificationParams: {
-          userId: targetUser._id,
-          type: "session_otp",
-          title: "Your Identity Code",
-          message: `Your verification code for the interview is ${otp}. It expires in 10 minutes.`,
-        }
-      }
+    // Direct Email Send for OTP
+    console.log("Direct OTP Send: Attempting to send to", targetUser.email);
+    await sendEmailOtp({
+      userEmail: targetUser.email,
+      userName: targetUser.name,
+      otpCode: otp
+    });
+
+    await Notification.create({
+      userId: targetUser._id,
+      type: "session_otp",
+      title: "Your Identity Code",
+      message: `Your verification code for the interview is ${otp}. It expires in 10 minutes.`,
     });
 
     res.status(200).json({ message: `Verification code sent to ${targetUser.email}` });
