@@ -1,36 +1,32 @@
-import { Resend } from 'resend';
+import sgMail from '@sendgrid/mail';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 /**
- * Resend Email Service (Production Ready)
+ * SendGrid Email Service
  */
-const resend = new Resend(process.env.RESEND_API_KEY);
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 export async function sendInvite({ to, subject, html, from }) {
-  if (!process.env.RESEND_API_KEY) {
-    console.error('❌ RESEND_API_KEY missing – cannot send email');
+  if (!process.env.SENDGRID_API_KEY) {
+    console.error('❌ SENDGRID_API_KEY missing – cannot send email');
     return { error: 'Missing API Key' };
   }
   
+  const msg = {
+    to,
+    from: from || 'GMRIT CodeSphere <notifications@gmrit-codesphere.com>', // Verified sender in SendGrid
+    subject,
+    html,
+  };
+
   try {
-    const { data, error } = await resend.emails.send({
-      from: from || 'GMRIT CodeSphere <onboarding@resend.dev>',
-      to,
-      subject,
-      html,
-    });
-
-    if (error) {
-       console.error('❌ Resend Error for:', to, error.message);
-       return { error };
-    }
-
-    console.log('✅ Email sent successfully via Resend to:', to, 'ID:', data.id);
-    return { success: true, data };
+    const [response] = await sgMail.send(msg);
+    console.log('✅ Email sent successfully via SendGrid to:', to, 'Status:', response.statusCode);
+    return { success: true, data: response };
   } catch (err) {
-    console.error('❌ Resend Exception for:', to, err.message);
+    console.error('❌ SendGrid Error for:', to, err.response?.body?.errors || err.message);
     return { error: err };
   }
 }

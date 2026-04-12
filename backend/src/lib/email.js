@@ -15,7 +15,7 @@ import {
 import { sendInvite } from './emailService.js';
 import React from 'react';
 
-const EMAIL_FROM = 'GMRIT CodeSphere <onboarding@resend.dev>';
+const EMAIL_FROM = 'GMRIT CodeSphere <dineshjammu143@gmail.com>';
 
 // Use React.createElement to avoid needing a JSX transpiler in the backend
 const InvitationTemplate = (props) => {
