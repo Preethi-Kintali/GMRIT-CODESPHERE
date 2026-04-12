@@ -1,32 +1,40 @@
-import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 dotenv.config();
 
-/**
- * SendGrid Email Service
- */
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 export async function sendInvite({ to, subject, html, from }) {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.error('❌ SENDGRID_API_KEY missing – cannot send email');
-    return { error: 'Missing API Key' };
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.error('❌ Gmail credentials missing – cannot send email');
+    return { error: 'Missing credentials' };
   }
   
-  const msg = {
-    to,
-    from: from || 'GMRIT CodeSphere <notifications@gmrit-codesphere.com>', // Verified sender in SendGrid
-    subject,
-    html,
-  };
-
   try {
-    const [response] = await sgMail.send(msg);
-    console.log('✅ Email sent successfully via SendGrid to:', to, 'Status:', response.statusCode);
-    return { success: true, data: response };
+    const info = await transporter.sendMail({
+      from: from || `GMRIT CodeSphere <${process.env.GMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+    console.log('✅ Email sent successfully via Gmail to:', to, 'ID:', info.messageId);
+    return { success: true, data: info };
   } catch (err) {
-    console.error('❌ SendGrid Error for:', to, err.response?.body?.errors || err.message);
+    console.error('❌ Gmail Error for:', to, err.message);
     return { error: err };
   }
 }

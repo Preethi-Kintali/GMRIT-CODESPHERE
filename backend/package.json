@@ -16,7 +16,6 @@
     "@clerk/express": "^1.7.41",
     "@react-email/components": "^1.0.10",
     "@react-email/render": "^2.0.4",
-    "@sendgrid/mail": "^8.1.6",
     "@stream-io/node-sdk": "^0.7.12",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
