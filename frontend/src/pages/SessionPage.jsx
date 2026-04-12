@@ -97,7 +97,8 @@ function SessionPage() {
     if (hasJoinedRef.current) return; // idempotency guard
 
     // the host check previously bypass join, but now both parties MUST join to activate schedule -> active state!
-    if (token) {
+    // Both parties can join by identity or by token
+    if (isInterviewer || isCandidate || token) {
       hasJoinedRef.current = true;
       joinSessionMutation.mutate({ id, token }, { onSuccess: refetch });
     }
@@ -313,13 +314,12 @@ function SessionPage() {
 
   return (
     <div className="h-screen bg-[#000000] flex flex-col font-sans relative overflow-hidden">
-      {isCandidate && !session?.isVerified && (
+      {session?.status === "scheduled" && (
         <SessionLobby 
           session={session} 
-          onVerified={() => {
+          onSuccess={() => {
             enterFullscreen();
             refetch();
-            hasJoinedRef.current = false; // allow auto-join to trigger again
           }} 
         />
       )}

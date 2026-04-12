@@ -2,6 +2,8 @@ import { Inngest } from "inngest";
 import { connectDB } from "./db.js";
 import User from "../models/User.js";
 import { deleteStreamUser, upsertStreamUser } from "./stream.js";
+import { sendInterviewInvite, sendCancellationNotice, sendEmailOtp, sendSecurityTerminationNotice, sendRoleNotice } from "./email.js";
+import Notification from "../models/Notification.js";
 
 export const inngest = new Inngest({ id: "GMRIT-CodeSphere" });
 
@@ -27,8 +29,6 @@ const syncUser = inngest.createFunction(
       name: newUser.name,
       image: newUser.profileImage,
     });
-
-    // challenge: send a welcome email here later - once i complete
   },
 );
 
@@ -45,4 +45,77 @@ const deleteUserFromDB = inngest.createFunction(
   },
 );
 
-export const functions = [syncUser, deleteUserFromDB];
+const handleSessionScheduled = inngest.createFunction(
+  { id: "handle-session-scheduled" },
+  { event: "session/scheduled" },
+  async ({ event }) => {
+    await connectDB();
+    const { params, notifications } = event.data;
+    
+    // Send Emails
+    await sendInterviewInvite(params);
+    
+    // Create Notifications
+    await Notification.insertMany(notifications);
+  }
+);
+
+const handleSessionCancelled = inngest.createFunction(
+  { id: "handle-session-cancelled" },
+  { event: "session/cancelled" },
+  async ({ event }) => {
+    await connectDB();
+    const { params, notifications } = event.data;
+    
+    await sendCancellationNotice(params);
+    await Notification.insertMany(notifications);
+  }
+);
+
+const handleSessionTerminated = inngest.createFunction(
+  { id: "handle-session-terminated" },
+  { event: "session/terminated" },
+  async ({ event }) => {
+    await connectDB();
+    const { params, notifications } = event.data;
+    
+    await sendSecurityTerminationNotice(params);
+    await Notification.insertMany(notifications);
+  }
+);
+
+const handleSessionOtp = inngest.createFunction(
+  { id: "handle-session-otp" },
+  { event: "session/otp" },
+  async ({ event }) => {
+    await connectDB();
+    const { emailParams, notificationParams } = event.data;
+    
+    await sendEmailOtp(emailParams);
+    await Notification.create(notificationParams);
+  }
+);
+
+const handleRoleChange = inngest.createFunction(
+  { id: "handle-role-change" },
+  { event: "user/role-changed" },
+  async ({ event }) => {
+    await connectDB();
+    const { emailParams, notificationParams } = event.data;
+    
+    await sendRoleNotice(emailParams);
+    if (notificationParams) {
+      await Notification.create(notificationParams);
+    }
+  }
+);
+
+export const functions = [
+  syncUser, 
+  deleteUserFromDB, 
+  handleSessionScheduled, 
+  handleSessionCancelled, 
+  handleSessionTerminated,
+  handleSessionOtp,
+  handleRoleChange
+];

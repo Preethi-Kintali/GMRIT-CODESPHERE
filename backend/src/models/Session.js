@@ -55,10 +55,20 @@ const sessionSchema = new mongoose.Schema(
     },
     finalCode: { type: String, default: "" },
     finalLanguage: { type: String, default: "" },
+    interviewerCheckedIn: { type: Boolean, default: false },
+    candidateCheckedIn: { type: Boolean, default: false },
+    interviewerCheckedInAt: { type: Date },
+    candidateCheckedInAt: { type: Date },
   },
   {
     timestamps: true,
   }
 );
+
+// Optimized indexes for scheduling and lookups
+sessionSchema.index({ interviewer: 1, scheduledAt: 1 });
+sessionSchema.index({ candidate: 1, scheduledAt: 1 });
+sessionSchema.index({ status: 1 });
+sessionSchema.index({ scheduledAt: 1 });
 
 export default mongoose.model("Session", sessionSchema);

@@ -40,6 +40,10 @@ export const sessionApi = {
     const response = await axiosInstance.post(`/sessions/${id}/otp/verify`, { otp });
     return response.data;
   },
+  checkIn: async (id) => {
+    const response = await axiosInstance.post(`/sessions/${id}/check-in`);
+    return response.data;
+  },
   submitCandidateFeedback: async ({ id, rating, notes }) => {
     const response = await axiosInstance.post(`/sessions/${id}/candidate-feedback`, { rating, notes });
     return response.data;

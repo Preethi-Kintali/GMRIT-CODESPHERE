@@ -59,6 +59,16 @@ function ActiveSessions({ sessions, isLoading, isUserInSession }) {
                       >
                         {session.problem?.difficulty || 'easy'}
                       </span>
+                      {session.interviewerCheckedIn && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                          Int. Ready
+                        </span>
+                      )}
+                      {session.candidateCheckedIn && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          Cand. Ready
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-4 text-xs text-neutral-500">
@@ -79,7 +89,7 @@ function ActiveSessions({ sessions, isLoading, isUserInSession }) {
                   to={`/session/${session._id}`}
                   className="px-4 py-2 text-xs font-medium rounded-md bg-white text-black hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2 shrink-0"
                 >
-                  {session.status === "active" ? "Join" : "View Details"}
+                  {session.status === "active" || isUserInSession(session) ? "Join" : "View Details"}
                   <ArrowRightIcon className="size-3" />
                 </Link>
               </div>

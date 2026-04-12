@@ -3,8 +3,7 @@ import Session from "../models/Session.js";
 import User from "../models/User.js";
 import Problem from "../models/Problem.js";
 import crypto from "crypto";
-import { sendInterviewInvite, sendCancellationNotice } from "../lib/email.js";
-import Notification from "../models/Notification.js";
+import { inngest } from "../lib/inngest.js";
 import { ENV } from "../lib/env.js";
 
 export async function scheduleSession(req, res) {
@@ -163,36 +162,39 @@ export async function scheduleSession(req, res) {
     const interviewerLink = `${baseUrl}/session/${session._id}?token=${interviewerToken}`;
     const candidateLink = `${baseUrl}/session/${session._id}?token=${candidateToken}`;
 
-    // Trigger Email sends via Resend
-    await sendInterviewInvite({
-      interviewerEmail: interviewerDoc.email,
-      interviewerName: interviewerDoc.name,
-      candidateEmail: candidateDoc.email,
-      candidateName: candidateDoc.name,
-      problemTitle: problemDoc.title,
-      scheduledAt: session.scheduledAt,
-      duration: session.duration,
-      interviewerLink,
-      candidateLink,
-    });
-
-    // Create In-App Notifications
-    await Notification.insertMany([
-      {
-        userId: interviewerDoc._id,
-        type: "session_scheduled",
-        title: "New Interview Scheduled",
-        message: `You have been scheduled to interview ${candidateDoc.name} for the problem "${problemDoc.title}".`,
-        link: `/session/${session._id}`
-      },
-      {
-        userId: candidateDoc._id,
-        type: "session_scheduled",
-        title: "Interview Scheduled",
-        message: `Your interview with ${interviewerDoc.name} for the problem "${problemDoc.title}" has been scheduled.`,
-        link: `/session/${session._id}`
+    // Offload Emails and Notifications to Inngest
+    await inngest.send({
+      name: "session/scheduled",
+      data: {
+        params: {
+          interviewerEmail: interviewerDoc.email,
+          interviewerName: interviewerDoc.name,
+          candidateEmail: candidateDoc.email,
+          candidateName: candidateDoc.name,
+          problemTitle: problemDoc.title,
+          scheduledAt: session.scheduledAt,
+          duration: session.duration,
+          interviewerLink,
+          candidateLink,
+        },
+        notifications: [
+          {
+            userId: interviewerDoc._id,
+            type: "session_scheduled",
+            title: "New Interview Scheduled",
+            message: `You have been scheduled to interview ${candidateDoc.name} for the problem "${problemDoc.title}".`,
+            link: `/session/${session._id}`
+          },
+          {
+            userId: candidateDoc._id,
+            type: "session_scheduled",
+            title: "Interview Scheduled",
+            message: `Your interview with ${interviewerDoc.name} for the problem "${problemDoc.title}" has been scheduled.`,
+            link: `/session/${session._id}`
+          }
+        ]
       }
-    ]);
+    });
 
     res.status(201).json({ session });
   } catch (error) {
@@ -273,10 +275,14 @@ export async function joinSession(req, res) {
     let isInterviewer = false;
     let isCandidate = false;
 
-    // Validate the token and identity
-    if (session.interviewer.toString() === userId && session.interviewerToken === token) {
+    // 1. Check identity based on Session participants
+    const sessionInterviewerId = session.interviewer.toString();
+    const sessionCandidateId = session.candidate.toString();
+
+    // 2. Resolve role based on Identity or Token
+    if (sessionInterviewerId === userId && (!token || session.interviewerToken === token)) {
       isInterviewer = true;
-    } else if (session.candidate.toString() === userId && session.candidateToken === token) {
+    } else if (sessionCandidateId === userId && (!token || session.candidateToken === token)) {
       if (!session.isVerified) {
         return res.status(401).json({ 
           message: "Account verification required", 
@@ -285,7 +291,8 @@ export async function joinSession(req, res) {
       }
       isCandidate = true;
     } else {
-      return res.status(403).json({ message: "Invalid token or unauthorized execution" });
+      // Fallback: If identity doesn't match, or if specifically trying to join with wrong token
+      return res.status(403).json({ message: "Invalid access or unauthorized identity" });
     }
 
     // Activate the session if it's the first person joining at scheduled time
@@ -413,30 +420,33 @@ export async function cancelSession(req, res) {
     const problemDoc = await Problem.findById(session.problem);
 
     if (interviewerDoc && candidateDoc && problemDoc) {
-      await sendCancellationNotice({
-        interviewerEmail: interviewerDoc.email,
-        interviewerName: interviewerDoc.name,
-        candidateEmail: candidateDoc.email,
-        candidateName: candidateDoc.name,
-        problemTitle: problemDoc.title,
-        scheduledAt: session.scheduledAt,
-      });
-
-      // Create In-App Notifications
-      await Notification.insertMany([
-        {
-          userId: interviewerDoc._id,
-          type: "session_cancelled",
-          title: "Interview Cancelled",
-          message: `The interview with ${candidateDoc.name} for "${problemDoc.title}" has been cancelled.`
-        },
-        {
-          userId: candidateDoc._id,
-          type: "session_cancelled",
-          title: "Interview Cancelled",
-          message: `Your interview with ${interviewerDoc.name} for "${problemDoc.title}" has been cancelled.`
+      await inngest.send({
+        name: "session/cancelled",
+        data: {
+          params: {
+            interviewerEmail: interviewerDoc.email,
+            interviewerName: interviewerDoc.name,
+            candidateEmail: candidateDoc.email,
+            candidateName: candidateDoc.name,
+            problemTitle: problemDoc.title,
+            scheduledAt: session.scheduledAt,
+          },
+          notifications: [
+            {
+              userId: interviewerDoc._id,
+              type: "session_cancelled",
+              title: "Interview Cancelled",
+              message: `The interview with ${candidateDoc.name} for "${problemDoc.title}" has been cancelled.`
+            },
+            {
+              userId: candidateDoc._id,
+              type: "session_cancelled",
+              title: "Interview Cancelled",
+              message: `Your interview with ${interviewerDoc.name} for "${problemDoc.title}" has been cancelled.`
+            }
+          ]
         }
-      ]);
+      });
     }
 
     res.status(200).json({ session, message: "Session cancelled successfully" });
@@ -469,19 +479,22 @@ export async function sendSessionOtp(req, res) {
     session.candidateOtp = { code: otp, expiresAt };
     await session.save();
 
-    // Send via email
-    await import("../lib/email.js").then(m => m.sendEmailOtp({
-      userEmail: session.candidate.email,
-      userName: session.candidate.name,
-      otpCode: otp
-    }));
-
-    // Send via notification
-    await Notification.create({
-      userId: session.candidate._id,
-      type: "session_otp",
-      title: "Your Interview Code",
-      message: `Your verification code for the interview is ${otp}. It expires in 10 minutes.`,
+    // Offload via Inngest
+    await inngest.send({
+      name: "session/otp",
+      data: {
+        emailParams: {
+          userEmail: session.candidate.email,
+          userName: session.candidate.name,
+          otpCode: otp
+        },
+        notificationParams: {
+          userId: session.candidate._id,
+          type: "session_otp",
+          title: "Your Interview Code",
+          message: `Your verification code for the interview is ${otp}. It expires in 10 minutes.`,
+        }
+      }
     });
 
     res.status(200).json({ message: "OTP sent successfully to your registered email" });
@@ -625,30 +638,33 @@ export async function terminateByViolation(req, res) {
     session.terminationReason = reason || "Security Policy Breach (3+ Fullscreen Violations)";
     await session.save();
 
-    // Send Emails
-    await import("../lib/email.js").then(m => m.sendSecurityTerminationNotice({
-      interviewerEmail: session.interviewer.email,
-      interviewerName: session.interviewer.name,
-      candidateEmail: session.candidate.email,
-      candidateName: session.candidate.name,
-      reason: session.terminationReason
-    }));
-
-    // Create Final Notifications
-    await Notification.insertMany([
-      {
-        userId: session.interviewer._id,
-        type: "session_terminated",
-        title: "Session Terminated: Security",
-        message: `The session with ${session.candidate.name} was terminated for: ${session.terminationReason}`
-      },
-      {
-        userId: session.candidate._id,
-        type: "session_terminated",
-        title: "Policy Breach: Terminated",
-        message: "Your interview was terminated due to security violations. A report has been sent to the admin."
+    // Offload via Inngest
+    await inngest.send({
+      name: "session/terminated",
+      data: {
+        params: {
+          interviewerEmail: session.interviewer.email,
+          interviewerName: session.interviewer.name,
+          candidateEmail: session.candidate.email,
+          candidateName: session.candidate.name,
+          reason: session.terminationReason
+        },
+        notifications: [
+          {
+            userId: session.interviewer._id,
+            type: "session_terminated",
+            title: "Session Terminated: Security",
+            message: `The session with ${session.candidate.name} was terminated for: ${session.terminationReason}`
+          },
+          {
+            userId: session.candidate._id,
+            type: "session_terminated",
+            title: "Policy Breach: Terminated",
+            message: "Your interview was terminated due to security violations. A report has been sent to the admin."
+          }
+        ]
       }
-    ]);
+    });
 
     res.status(200).json({ message: "Session terminated due to security violations", status: "terminated" });
   } catch (error) {
@@ -656,3 +672,38 @@ export async function terminateByViolation(req, res) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
+
+export async function checkIn(req, res) {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id.toString();
+
+    const session = await Session.findById(id);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    if (session.status === "completed" || session.status === "cancelled") {
+      return res.status(400).json({ message: `Cannot check-in to a ${session.status} session` });
+    }
+
+    if (session.interviewer.toString() === userId) {
+      session.interviewerCheckedIn = true;
+      session.interviewerCheckedInAt = new Date();
+    } else if (session.candidate.toString() === userId) {
+      if (!session.isVerified) {
+        return res.status(401).json({ message: "Candidate must be verified (OTP) before checking in" });
+      }
+      session.candidateCheckedIn = true;
+      session.candidateCheckedInAt = new Date();
+    } else {
+      return res.status(403).json({ message: "Unauthorized check-in attempt" });
+    }
+
+    await session.save();
+    res.status(200).json({ session, message: "Checked in successfully" });
+  } catch (error) {
+    console.error("Error in checkIn:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+// ... existing export functions ...

@@ -2,8 +2,7 @@ import User from "../models/User.js";
 import Session from "../models/Session.js";
 import Problem from "../models/Problem.js";
 import { clerkClient } from "@clerk/express";
-import { sendRoleNotice } from "../lib/email.js";
-import Notification from "../models/Notification.js";
+import { inngest } from "../lib/inngest.js";
 
 export const getAdminStats = async (req, res) => {
   try {
@@ -82,24 +81,23 @@ export const promoteToInterviewer = async (req, res) => {
       },
     });
 
-    // Notify user via Email
-    try {
-      await sendRoleNotice({
-        userEmail: user.email,
-        userName: user.name,
-        roleType: "Interviewer",
-        action: "promoted"
-      });
-    } catch (emailErr) {
-      console.error("Non-fatal email error:", emailErr);
-    }
-
-    // Create In-App Notification
-    await Notification.create({
-      userId: user._id,
-      type: "role_change",
-      title: "Promoted to Interviewer",
-      message: "Congratulations! You have been promoted to an Interviewer role."
+    // Offload via Inngest
+    await inngest.send({
+      name: "user/role-changed",
+      data: {
+        emailParams: {
+          userEmail: user.email,
+          userName: user.name,
+          roleType: "Interviewer",
+          action: "promoted"
+        },
+        notificationParams: {
+          userId: user._id,
+          type: "role_change",
+          title: "Promoted to Interviewer",
+          message: "Congratulations! You have been promoted to an Interviewer role."
+        }
+      }
     });
 
     res.json({ message: "User promoted to interviewer successfully", user });
@@ -149,17 +147,18 @@ export const demoteInterviewer = async (req, res) => {
       },
     });
 
-    // Notify user via Email
-    try {
-      await sendRoleNotice({
-        userEmail: user.email,
-        userName: user.name,
-        roleType: "Candidate",
-        action: "demoted"
-      });
-    } catch (emailErr) {
-      console.error("Non-fatal email error:", emailErr);
-    }
+    // Offload via Inngest
+    await inngest.send({
+      name: "user/role-changed",
+      data: {
+        emailParams: {
+          userEmail: user.email,
+          userName: user.name,
+          roleType: "Candidate",
+          action: "demoted"
+        }
+      }
+    });
 
     res.json({ message: "Interviewer successfully moved back to candidate", user });
   } catch (error) {
