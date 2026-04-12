@@ -268,8 +268,12 @@ export async function joinSession(req, res) {
     const session = await Session.findById(id);
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    if (session.status === "completed" || session.status === "cancelled") {
-      return res.status(400).json({ message: `Cannot join a ${session.status} session` });
+    // V2.2: Strict Block on Non-Active/Scheduled States
+    if (session.status === "completed") {
+      return res.status(403).json({ message: "This interview has already been completed and cannot be rejoined." });
+    }
+    if (session.status === "cancelled") {
+      return res.status(403).json({ message: "This interview session was cancelled by the administrator." });
     }
 
     let isInterviewer = false;
@@ -281,11 +285,17 @@ export async function joinSession(req, res) {
 
     // 2. Resolve role based on Identity or Token
     if (sessionInterviewerId === userId && (!token || session.interviewerToken === token)) {
+      if (!session.isInterviewerVerified) {
+        return res.status(401).json({ 
+          message: "Interviewer security verification required", 
+          requiresVerification: true 
+        });
+      }
       isInterviewer = true;
     } else if (sessionCandidateId === userId && (!token || session.candidateToken === token)) {
       if (!session.isVerified) {
         return res.status(401).json({ 
-          message: "Account verification required", 
+          message: "Candidate security verification required", 
           requiresVerification: true 
         });
       }
@@ -295,8 +305,11 @@ export async function joinSession(req, res) {
       return res.status(403).json({ message: "Invalid access or unauthorized identity" });
     }
 
-    // Activate the session if it's the first person joining at scheduled time
-    if (session.status === "scheduled") {
+    // 3. Activation Guard (Only activate at or after start time)
+    const now = new Date();
+    const scheduledTime = new Date(session.scheduledAt);
+
+    if (session.status === "scheduled" && now >= scheduledTime) {
       session.status = "active";
       await session.save();
     }
@@ -461,22 +474,32 @@ export async function sendSessionOtp(req, res) {
     const { id } = req.params;
     const userId = req.user._id.toString();
 
-    const session = await Session.findById(id).populate("candidate");
+    const session = await Session.findById(id).populate("candidate").populate("interviewer");
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    if (session.candidate._id.toString() !== userId) {
-      return res.status(403).json({ message: "Only the assigned candidate can request an OTP" });
+    const isCandidate = session.candidate._id.toString() === userId;
+    const isInterviewer = session.interviewer._id.toString() === userId;
+
+    if (!isCandidate && !isInterviewer) {
+      return res.status(403).json({ message: "Unauthorized OTP request" });
     }
 
-    if (session.isVerified) {
-      return res.status(400).json({ message: "Candidate is already verified for this session" });
+    if ((isCandidate && session.isVerified) || (isInterviewer && session.isInterviewerVerified)) {
+      return res.status(400).json({ message: "Account is already verified for this session" });
     }
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60000); // 10 minutes
 
-    session.candidateOtp = { code: otp, expiresAt };
+    const targetUser = isCandidate ? session.candidate : session.interviewer;
+    
+    if (isCandidate) {
+      session.candidateOtp = { code: otp, expiresAt };
+    } else {
+      session.interviewerOtp = { code: otp, expiresAt };
+    }
+    
     await session.save();
 
     // Offload via Inngest
@@ -484,20 +507,20 @@ export async function sendSessionOtp(req, res) {
       name: "session/otp",
       data: {
         emailParams: {
-          userEmail: session.candidate.email,
-          userName: session.candidate.name,
+          userEmail: targetUser.email,
+          userName: targetUser.name,
           otpCode: otp
         },
         notificationParams: {
-          userId: session.candidate._id,
+          userId: targetUser._id,
           type: "session_otp",
-          title: "Your Interview Code",
+          title: "Your Identity Code",
           message: `Your verification code for the interview is ${otp}. It expires in 10 minutes.`,
         }
       }
     });
 
-    res.status(200).json({ message: "OTP sent successfully to your registered email" });
+    res.status(200).json({ message: `Verification code sent to ${targetUser.email}` });
   } catch (error) {
     console.error("Error in sendSessionOtp:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -513,27 +536,38 @@ export async function verifySessionOtp(req, res) {
     const session = await Session.findById(id);
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    if (session.candidate.toString() !== userId) {
+    const isCandidate = session.candidate.toString() === userId;
+    const isInterviewer = session.interviewer.toString() === userId;
+
+    if (!isCandidate && !isInterviewer) {
       return res.status(403).json({ message: "Unauthorized verification attempt" });
     }
 
-    if (session.isVerified) {
+    const otpData = isCandidate ? session.candidateOtp : session.interviewerOtp;
+
+    if ((isCandidate && session.isVerified) || (isInterviewer && session.isInterviewerVerified)) {
       return res.status(200).json({ message: "Already verified" });
     }
 
-    if (!session.candidateOtp?.code || session.candidateOtp.code !== otp) {
+    if (!otpData?.code || otpData.code !== otp) {
       return res.status(400).json({ message: "Invalid verification code" });
     }
 
-    if (new Date() > session.candidateOtp.expiresAt) {
+    if (new Date() > otpData.expiresAt) {
       return res.status(400).json({ message: "Verification code has expired" });
     }
 
-    session.isVerified = true;
-    session.candidateOtp = undefined; // Clear OTP after use
+    if (isCandidate) {
+      session.isVerified = true;
+      session.candidateOtp = undefined;
+    } else {
+      session.isInterviewerVerified = true;
+      session.interviewerOtp = undefined;
+    }
+    
     await session.save();
 
-    res.status(200).json({ message: "Verification successful. You can now join the session." });
+    res.status(200).json({ message: "Verification successful!" });
   } catch (error) {
     console.error("Error in verifySessionOtp:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -555,6 +589,10 @@ export async function submitCandidateFeedback(req, res) {
 
     if (session.status !== "completed") {
       return res.status(400).json({ message: "Feedback can only be submitted for completed sessions" });
+    }
+
+    if (session.candidateFeedback?.submittedAt) {
+      return res.status(400).json({ message: "Feedback has already been submitted for this session" });
     }
 
     session.candidateFeedback = {
@@ -706,4 +744,26 @@ export async function checkIn(req, res) {
   }
 }
 
-// ... existing export functions ...
+export async function acceptGuidelines(req, res) {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id.toString();
+
+    const session = await Session.findById(id);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    if (session.interviewer.toString() === userId) {
+      session.interviewerAcceptedGuidelines = true;
+    } else if (session.candidate.toString() === userId) {
+      session.candidateAcceptedGuidelines = true;
+    } else {
+      return res.status(403).json({ message: "Unauthorized action" });
+    }
+
+    await session.save();
+    res.status(200).json({ message: "Guidelines accepted" });
+  } catch (error) {
+    console.error("Error in acceptGuidelines:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}

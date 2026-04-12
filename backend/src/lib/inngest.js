@@ -49,11 +49,13 @@ const handleSessionScheduled = inngest.createFunction(
   { id: "handle-session-scheduled" },
   { event: "session/scheduled" },
   async ({ event }) => {
+    console.log("Inngest: Handling session/scheduled event...");
     await connectDB();
     const { params, notifications } = event.data;
     
     // Send Emails
     await sendInterviewInvite(params);
+    console.log("Inngest: Invitation emails sent.");
     
     // Create Notifications
     await Notification.insertMany(notifications);
@@ -64,10 +66,12 @@ const handleSessionCancelled = inngest.createFunction(
   { id: "handle-session-cancelled" },
   { event: "session/cancelled" },
   async ({ event }) => {
+    console.log("Inngest: Handling session/cancelled event...");
     await connectDB();
     const { params, notifications } = event.data;
     
     await sendCancellationNotice(params);
+    console.log("Inngest: Cancellation emails sent.");
     await Notification.insertMany(notifications);
   }
 );
@@ -76,10 +80,12 @@ const handleSessionTerminated = inngest.createFunction(
   { id: "handle-session-terminated" },
   { event: "session/terminated" },
   async ({ event }) => {
+    console.log("Inngest: Handling session/terminated event...");
     await connectDB();
     const { params, notifications } = event.data;
     
     await sendSecurityTerminationNotice(params);
+    console.log("Inngest: Termination emails sent.");
     await Notification.insertMany(notifications);
   }
 );
@@ -88,10 +94,12 @@ const handleSessionOtp = inngest.createFunction(
   { id: "handle-session-otp" },
   { event: "session/otp" },
   async ({ event }) => {
+    console.log("Inngest: Handling session/otp event...");
     await connectDB();
     const { emailParams, notificationParams } = event.data;
     
     await sendEmailOtp(emailParams);
+    console.log("Inngest: OTP email sent.");
     await Notification.create(notificationParams);
   }
 );
@@ -100,10 +108,12 @@ const handleRoleChange = inngest.createFunction(
   { id: "handle-role-change" },
   { event: "user/role-changed" },
   async ({ event }) => {
+    console.log("Inngest: Handling user/role-changed event...");
     await connectDB();
     const { emailParams, notificationParams } = event.data;
     
     await sendRoleNotice(emailParams);
+    console.log("Inngest: Role change email sent.");
     if (notificationParams) {
       await Notification.create(notificationParams);
     }

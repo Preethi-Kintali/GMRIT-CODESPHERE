@@ -40,7 +40,14 @@ const sessionSchema = new mongoose.Schema(
       code: { type: String },
       expiresAt: { type: Date },
     },
-    isVerified: { type: Boolean, default: false },
+    interviewerOtp: {
+      code: { type: String },
+      expiresAt: { type: Date },
+    },
+    isVerified: { type: Boolean, default: false }, // for candidate
+    isInterviewerVerified: { type: Boolean, default: false },
+    interviewerAcceptedGuidelines: { type: Boolean, default: false },
+    candidateAcceptedGuidelines: { type: Boolean, default: false },
     violationCount: { type: Number, default: 0 },
     terminationReason: { type: String },
     feedback: {

@@ -16,6 +16,7 @@ import {
   recordViolation,
   terminateByViolation,
   checkIn,
+  acceptGuidelines,
 } from "../controllers/sessionController.js";
 
 const router = express.Router();
@@ -28,6 +29,7 @@ router.get("/:id", protectRoute, getSessionById);
 router.post("/:id/otp/send", protectRoute, sendSessionOtp);
 router.post("/:id/otp/verify", protectRoute, verifySessionOtp);
 router.post("/:id/check-in", protectRoute, checkIn);
+router.post("/:id/guidelines/accept", protectRoute, acceptGuidelines);
 router.post("/:id/join", protectRoute, joinSession);
 router.post("/:id/end", protectRoute, endSession);
 router.post("/:id/feedback", protectRoute, submitFeedback);
