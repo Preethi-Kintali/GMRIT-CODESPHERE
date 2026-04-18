@@ -32,7 +32,7 @@ function SessionPage() {
   const [isCopied, setIsCopied] = useState(false);
   const isMobile = useMobile();
 
-  const { data: sessionData, isLoading: loadingSession, refetch } = useSessionById(id);
+  const { data: sessionData, isLoading: loadingSession, isError: isSessionError, error: sessionError, refetch } = useSessionById(id);
 
 
   const joinSessionMutation = useJoinSession();
@@ -41,6 +41,42 @@ function SessionPage() {
   const session = sessionData?.session;
   const isInterviewer = session?.interviewer?.clerkId === user?.id;
   const isCandidate = session?.candidate?.clerkId === user?.id;
+
+  if (loadingSession) {
+    return (
+      <div className="h-screen bg-black flex flex-col items-center justify-center space-y-4">
+        <Loader2Icon className="size-10 text-emerald-500 animate-spin" />
+        <p className="text-neutral-500 font-medium animate-pulse uppercase tracking-[0.2em] text-xs">Establishing Secure Link...</p>
+      </div>
+    );
+  }
+
+  if (isSessionError || !session) {
+    return (
+      <div className="h-screen bg-black flex flex-col items-center justify-center p-8 text-center">
+        <div className="max-w-md space-y-8">
+           <div className="size-24 bg-red-600/10 border border-red-600/30 rounded-3xl flex items-center justify-center mx-auto mb-4 scale-110 shadow-[0_0_50px_rgba(220,38,38,0.1)]">
+              <PhoneOffIcon className="size-12 text-red-500" />
+           </div>
+           <div className="space-y-2">
+              <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Session Not Found</h1>
+              <div className="badge badge-error gap-2 font-bold px-4 py-3">Database Lookup Failure</div>
+           </div>
+           <p className="text-neutral-400 text-sm bg-red-950/20 p-5 rounded-2xl border border-red-900/20">
+              {sessionError?.response?.data?.message || "The interview session you are looking for does not exist or has been removed."}
+           </p>
+           <div className="pt-6">
+              <button 
+                onClick={() => navigate("/dashboard")} 
+                className="btn btn-outline btn-error px-10 rounded-full"
+              >
+                Return to Dashboard
+              </button>
+           </div>
+        </div>
+      </div>
+    );
+  }
 
   if (session?.terminationReason) {
     return (

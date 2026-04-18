@@ -33,6 +33,13 @@ function ScrollToTop() {
   return null;
 }
 
+import { useParams } from "react-router";
+
+function SessionPluralRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/session/${id}`} replace />;
+}
+
 function App() {
   const { isSignedIn, isLoaded, user } = useUser();
 
@@ -64,15 +71,19 @@ function App() {
         />
         <Route
           path="/session/:id"
-          element={isSignedIn ? <SessionPage /> : <Navigate to={"/"} />}
+          element={isSignedIn ? <SessionPage /> : <Navigate to={`/?redirect_url=${encodeURIComponent(window.location.pathname)}`} replace />}
+        />
+        <Route
+          path="/sessions/:id"
+          element={<SessionPluralRedirect />}
         />
         <Route
           path="/session/:id/feedback"
-          element={isSignedIn ? <FeedbackPage /> : <Navigate to={"/"} />}
+          element={isSignedIn ? <FeedbackPage /> : <Navigate to={`/?redirect_url=${encodeURIComponent(window.location.pathname)}`} replace />}
         />
         <Route
           path="/session/:id/feedback/candidate"
-          element={isSignedIn ? <CandidateFeedbackPage /> : <Navigate to={"/"} />}
+          element={isSignedIn ? <CandidateFeedbackPage /> : <Navigate to={`/?redirect_url=${encodeURIComponent(window.location.pathname)}`} replace />}
         />
         <Route
           path="/profile"

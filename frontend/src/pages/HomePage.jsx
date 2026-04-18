@@ -12,6 +12,8 @@ import {
 import { SignInButton } from "@clerk/clerk-react";
 
 function HomePage() {
+  const redirectUrl = new URLSearchParams(window.location.search).get("redirect_url") || "/dashboard";
+
   return (
     <div className="min-h-screen bg-[#000000] text-neutral-300 selection:bg-white/10 selection:text-white font-sans">
       {/* NAVBAR */}
@@ -32,7 +34,7 @@ function HomePage() {
           </Link>
 
           {/* AUTH BTN */}
-          <SignInButton mode="modal">
+          <SignInButton mode="modal" forceRedirectUrl={redirectUrl}>
             <button className="btn btn-sm btn-ghost bg-white/10 hover:bg-white/20 text-white border-none flex items-center gap-2">
               Get Started
             </button>
@@ -59,7 +61,7 @@ function HomePage() {
           </p>
 
           <div className="flex items-center gap-4 pt-4">
-            <SignInButton mode="modal">
+            <SignInButton mode="modal" forceRedirectUrl={redirectUrl}>
               <button className="btn btn-primary flex items-center gap-2">
                 Start Coding Now
                 <ArrowRightIcon className="size-4" />
