@@ -33,14 +33,24 @@ function SessionPage() {
   const isMobile = useMobile();
 
   const { data: sessionData, isLoading: loadingSession, isError: isSessionError, error: sessionError, refetch } = useSessionById(id);
-
-
   const joinSessionMutation = useJoinSession();
   const endSessionMutation = useEndSession();
 
   const session = sessionData?.session;
   const isInterviewer = session?.interviewer?.clerkId === user?.id;
   const isCandidate = session?.candidate?.clerkId === user?.id;
+
+  // Guard to prevent duplicate join calls (React StrictMode mounts effects twice in dev)
+  const hasJoinedRef = useRef(false);
+  const socketRef = useRef(null);
+
+  // Note: we let streamClient hook know the roles as well
+  const { call, channel, chatClient, isInitializingCall, streamClient } = useStreamClient(
+    session,
+    loadingSession,
+    isInterviewer,
+    isCandidate
+  );
 
   if (loadingSession) {
     return (
@@ -133,18 +143,6 @@ function SessionPage() {
       </div>
     );
   }
-
-  // Guard to prevent duplicate join calls (React StrictMode mounts effects twice in dev)
-  const hasJoinedRef = useRef(false);
-  const socketRef = useRef(null);
-
-  // Note: we let streamClient hook know the roles as well
-  const { call, channel, chatClient, isInitializingCall, streamClient } = useStreamClient(
-    session,
-    loadingSession,
-    isInterviewer,
-    isCandidate
-  );
 
   // find the problem data based on session problem ID (from backend problem population)
   // Backend populates session.problem with { _id, title, ... }
