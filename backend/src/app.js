@@ -106,10 +106,16 @@ app.get("/health", (req, res) => {
 
 // make our app ready for deployment
 if (ENV.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  const distPath = path.join(__dirname, "../frontend/dist");
+  app.use(express.static(distPath));
 
-  app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+  app.get("*", (req, res) => {
+    // If the request is for a file (has an extension) but reached here, it means the file wasn't found in static
+    // We should NOT send index.html for missed assets as it causes MIME type errors
+    if (req.path.includes(".") && !req.path.endsWith(".html")) {
+      return res.status(404).end();
+    }
+    res.sendFile(path.join(distPath, "index.html"));
   });
 }
 

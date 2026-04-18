@@ -36,6 +36,7 @@ export async function scheduleSession(req, res) {
     
     // Rule a: Sundays
     if (localStartDate.getUTCDay() === 0) {
+       console.warn(`📅 Scheduling Rejected: Sunday block for ${start.toISOString()}`);
        return res.status(400).json({ message: "Interviews cannot be scheduled on Sundays." });
     }
 
@@ -45,11 +46,13 @@ export async function scheduleSession(req, res) {
     
     // Note: If session crosses beyond midnight local time, it's also effectively beyond 9 PM or next day.
     if (startTimeDecimal < 9 || endTimeDecimal > 21 || localStartDate.getUTCDate() !== localEndDate.getUTCDate()) {
+       console.warn(`📅 Scheduling Rejected: Out of bounds (9AM-9PM). Requested local: ${startTimeDecimal} to ${endTimeDecimal}`);
        return res.status(400).json({ message: "Sessions must be scheduled strictly within 9:00 AM and 9:00 PM." });
     }
 
     // Rule c: Lunch Time (1:00 PM - 2:30 PM) Overlap Protection
     if (startTimeDecimal < 14.5 && endTimeDecimal > 13) {
+       console.warn(`📅 Scheduling Rejected: Lunch break overlap.`);
        return res.status(400).json({ message: "Interviews cannot overlap with the 1:00 PM to 2:30 PM lunch break." });
     }
     
@@ -137,6 +140,7 @@ export async function scheduleSession(req, res) {
 
     if (conflict) {
       const actor = conflict.interviewer.toString() === interviewer ? "Interviewer" : "Candidate";
+      console.warn(`📅 Scheduling Conflict: ${actor} is busy during ${start.toISOString()} - ${end.toISOString()}`);
       return res.status(400).json({ message: `${actor} already has an active session during this time.` });
     }
 
@@ -519,14 +523,19 @@ export async function sendSessionOtp(req, res) {
     const { id } = req.params;
     const userId = req.user._id.toString();
 
+    console.log(`🔑 OTP DEBUG: SessionId=${id}, RequesterId=${userId}`);
+
     const session = await Session.findById(id).populate("candidate").populate("interviewer");
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    const isCandidate = session.candidate._id.toString() === userId;
-    const isInterviewer = session.interviewer._id.toString() === userId;
+    const isCandidate = session.candidate?._id?.toString() === userId;
+    const isInterviewer = session.interviewer?._id?.toString() === userId;
+
+    console.log(`🧐 OTP DEBUG: isCandidate=${isCandidate}, isInterviewer=${isInterviewer}`);
 
     if (!isCandidate && !isInterviewer) {
-      return res.status(403).json({ message: "Unauthorized OTP request" });
+      console.warn(`🛑 OTP ACCESS DENIED: User ${userId} tried to get OTP for session ${id}`);
+      return res.status(403).json({ message: "Unauthorized OTP request. You are not a participant in this session." });
     }
 
     if ((isCandidate && session.isVerified) || (isInterviewer && session.isInterviewerVerified)) {
