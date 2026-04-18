@@ -112,7 +112,7 @@ if (ENV.NODE_ENV === "production") {
   const distPath = path.join(__dirname, "../frontend/dist");
   app.use(express.static(distPath));
 
-  app.get("*", (req, res) => {
+  app.get(/(.*)/, (req, res) => {
     // If the request is for a file (has an extension) but reached here, it means the file wasn't found in static
     // We should NOT send index.html for missed assets as it causes MIME type errors
     if (req.path.includes(".") && !req.path.endsWith(".html")) {
