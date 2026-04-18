@@ -61,6 +61,8 @@ export default function SessionLobby({ session, onSuccess }) {
     }
   }, [step]);
 
+  const hasTriggeredRef = useRef(false);
+
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -69,8 +71,9 @@ export default function SessionLobby({ session, onSuccess }) {
       
       if (diff <= 0) {
         setTimeLeftToStart("00:00:00");
-        if (step === "waiting") {
-           // Auto-trigger success if in waiting step
+        if (step === "waiting" && !hasTriggeredRef.current) {
+           // Auto-trigger success exactly once
+           hasTriggeredRef.current = true;
            onSuccess();
         }
       } else {

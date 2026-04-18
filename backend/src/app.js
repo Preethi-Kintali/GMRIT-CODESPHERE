@@ -82,7 +82,7 @@ app.use(express.json());
 // rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 100, // limit each IP to 100 requests per windowMs
+  limit: 1000, // Accommodate legitimate real-time polling (e.g. useSessionById 5s polling, active 10s polling)
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { message: "Too many requests, please try again later." }
