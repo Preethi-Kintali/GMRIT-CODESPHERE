@@ -9,7 +9,7 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["role_change", "session_scheduled", "session_cancelled", "general"],
+      enum: ["role_change", "session_scheduled", "session_cancelled", "session_otp", "violation_warning", "violation_critical", "general"],
       required: true,
     },
     title: {
