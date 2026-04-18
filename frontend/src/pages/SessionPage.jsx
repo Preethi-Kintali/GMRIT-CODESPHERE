@@ -50,8 +50,8 @@ function SessionPage() {
               <PhoneOffIcon className="size-12 text-red-500 -rotate-12" />
            </div>
            <div className="space-y-2">
-              <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Interview Terminated</h1>
-              <div className="badge badge-error gap-2 font-bold px-4 py-3">Security Policy Breach</div>
+              <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Session Inaccessible</h1>
+              <div className="badge badge-error gap-2 font-bold px-4 py-3">Security Policy Block</div>
            </div>
            <p className="text-neutral-400 text-sm bg-red-950/20 p-5 rounded-2xl border border-red-900/20 italic">
               "{session.terminationReason}"
@@ -61,6 +61,34 @@ function SessionPage() {
               <button 
                 onClick={() => navigate("/dashboard")} 
                 className="btn btn-outline btn-error px-10 rounded-full hover:scale-105 active:scale-95 transition-transform"
+              >
+                Return to Dashboard
+              </button>
+           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle Join Errors (Unauthorized, Cancelled, Completed)
+  if (joinSessionMutation.isError) {
+    return (
+      <div className="h-screen bg-black flex flex-col items-center justify-center p-8 text-center">
+        <div className="max-w-md space-y-8">
+           <div className="size-24 bg-amber-600/10 border border-amber-600/30 rounded-3xl flex items-center justify-center mx-auto mb-4 scale-110 shadow-[0_0_50px_rgba(217,119,6,0.1)]">
+              <LogOutIcon className="size-12 text-amber-500" />
+           </div>
+           <div className="space-y-2">
+              <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Access Denied</h1>
+              <div className="badge badge-warning gap-2 font-bold px-4 py-3">Authorization Error</div>
+           </div>
+           <p className="text-neutral-400 text-sm bg-amber-950/20 p-5 rounded-2xl border border-amber-900/20">
+              {joinSessionMutation.error?.response?.data?.message || "You are not authorized to join this interview session."}
+           </p>
+           <div className="pt-6">
+              <button 
+                onClick={() => navigate("/dashboard")} 
+                className="btn btn-outline btn-warning px-10 rounded-full"
               >
                 Return to Dashboard
               </button>
@@ -214,6 +242,11 @@ function SessionPage() {
 
     socketRef.current.on("session_terminated", ({ reason }) => {
        toast.error(`TERMINATED: ${reason}`);
+       refetch();
+    });
+
+    socketRef.current.on("session_started", () => {
+       toast.success("Interview session is now LIVE!");
        refetch();
     });
 

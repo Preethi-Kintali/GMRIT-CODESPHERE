@@ -262,6 +262,17 @@ export async function getSessionById(req, res) {
       .populate("problem");
 
     if (!session) return res.status(404).json({ message: "Session not found" });
+
+    // Auto-activate if time reached
+    const now = new Date();
+    const scheduledTime = new Date(session.scheduledAt);
+    if (session.status === "scheduled" && now >= scheduledTime) {
+      session.status = "active";
+      await session.save();
+      const io = req.app.get("io");
+      if (io) io.to(id).emit("session_started", { sessionId: id });
+    }
+
     res.status(200).json({ session });
   } catch (error) {
     console.error("Error in getSessionById:", error);
@@ -331,6 +342,12 @@ export async function joinSession(req, res) {
     if (session.status === "scheduled" && now >= scheduledTime) {
       session.status = "active";
       await session.save();
+      
+      // Notify all connected users that the session is now live
+      const io = req.app.get("io");
+      if (io) {
+        io.to(id).emit("session_started", { sessionId: id });
+      }
     }
 
 
@@ -451,6 +468,7 @@ export async function cancelSession(req, res) {
     }
 
     session.status = "cancelled";
+    session.terminationReason = "This session has been cancelled by the administrator.";
     await session.save();
 
     // Notify Interviewer and Candidate via Email
