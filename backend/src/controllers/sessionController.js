@@ -357,7 +357,10 @@ export async function joinSession(req, res) {
 
 
     // Add user to the Stream chat channel
-    const channel = chatClient.channel("messaging", session.callId);
+    const channel = chatClient.channel("messaging", session.callId, {
+      created_by_id: clerkId,
+    });
+    await channel.create();
     await channel.addMembers([clerkId]);
 
     res.status(200).json({ session, role: isInterviewer ? "interviewer" : "candidate" });
