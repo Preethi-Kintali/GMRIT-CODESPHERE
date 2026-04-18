@@ -42,11 +42,14 @@ function SessionPluralRedirect() {
 
 function App() {
   const { isSignedIn, isLoaded, user } = useUser();
+  const location = useLocation();
 
   // this will get rid of the flickering effect
   if (!isLoaded) return null;
 
   const isAdmin = user?.publicMetadata?.role === "admin";
+  const searchParams = new URLSearchParams(location.search);
+  const redirectUrl = searchParams.get("redirect_url");
 
   return (
     <>
@@ -54,7 +57,15 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={!isSignedIn ? <HomePage /> : <Navigate to={isAdmin ? "/admin" : "/dashboard"} />}
+          element={
+            !isSignedIn ? (
+              <HomePage />
+            ) : redirectUrl ? (
+              <Navigate to={redirectUrl} replace />
+            ) : (
+              <Navigate to={isAdmin ? "/admin" : "/dashboard"} replace />
+            )
+          }
         />
         <Route
           path="/dashboard"
@@ -71,7 +82,7 @@ function App() {
         />
         <Route
           path="/session/:id"
-          element={isSignedIn ? <SessionPage /> : <Navigate to={`/?redirect_url=${encodeURIComponent(window.location.pathname)}`} replace />}
+          element={isSignedIn ? <SessionPage /> : <Navigate to={`/?redirect_url=${encodeURIComponent(window.location.pathname + window.location.search)}`} replace />}
         />
         <Route
           path="/sessions/:id"
@@ -79,11 +90,11 @@ function App() {
         />
         <Route
           path="/session/:id/feedback"
-          element={isSignedIn ? <FeedbackPage /> : <Navigate to={`/?redirect_url=${encodeURIComponent(window.location.pathname)}`} replace />}
+          element={isSignedIn ? <FeedbackPage /> : <Navigate to={`/?redirect_url=${encodeURIComponent(window.location.pathname + window.location.search)}`} replace />}
         />
         <Route
           path="/session/:id/feedback/candidate"
-          element={isSignedIn ? <CandidateFeedbackPage /> : <Navigate to={`/?redirect_url=${encodeURIComponent(window.location.pathname)}`} replace />}
+          element={isSignedIn ? <CandidateFeedbackPage /> : <Navigate to={`/?redirect_url=${encodeURIComponent(window.location.pathname + window.location.search)}`} replace />}
         />
         <Route
           path="/profile"
