@@ -248,7 +248,9 @@ function SessionPage() {
   }
 
   // Handle Join Errors (Unauthorized, Cancelled, Completed)
-  if (joinSessionMutation.isError) {
+  const requiresVerification = joinSessionMutation.error?.response?.data?.requiresVerification;
+  
+  if (joinSessionMutation.isError && !requiresVerification) {
     return (
       <div className="h-screen bg-black flex flex-col items-center justify-center p-8 text-center">
         <div className="max-w-md space-y-8">
@@ -399,7 +401,7 @@ function SessionPage() {
           session={session} 
           onSuccess={() => {
             enterFullscreen();
-            refetch();
+            joinSessionMutation.mutate({ id, token }, { onSuccess: refetch });
           }} 
         />
       )}
