@@ -166,23 +166,27 @@ export const sendInterviewInvite = async (params) => {
   const interviewerHtml = await render(React.createElement(InvitationTemplate, { ...params, role: 'interviewer' }));
   const candidateHtml = await render(React.createElement(InvitationTemplate, { ...params, role: 'candidate' }));
 
-  const results = await Promise.all([
-    sendInvite({ 
-      to: params.interviewerEmail, 
-      subject: "Interview Invitation", 
-      html: interviewerHtml,
-      from: EMAIL_FROM
-    }),
-    sendInvite({ 
-      to: params.candidateEmail, 
-      subject: "Interview Invitation", 
-      html: candidateHtml,
-      from: EMAIL_FROM 
-    })
-  ]);
+  const interviewerResult = await sendInvite({ 
+    to: params.interviewerEmail, 
+    subject: "Interview Invitation", 
+    html: interviewerHtml,
+    from: EMAIL_FROM
+  });
+  
+  if (interviewerResult.error) return interviewerResult;
 
-  const error = results.find(r => r.error);
-  return error ? error : { success: true };
+  // Add a small delay for API stability
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  const candidateResult = await sendInvite({ 
+    to: params.candidateEmail, 
+    subject: "Interview Invitation", 
+    html: candidateHtml,
+    from: EMAIL_FROM 
+  });
+
+  if (candidateResult.error) return candidateResult;
+  return { success: true };
 };
 
 
@@ -190,23 +194,26 @@ export const sendCancellationNotice = async (params) => {
   const interviewerHtml = await render(React.createElement(CancellationTemplate, { ...params, role: 'interviewer' }));
   const candidateHtml = await render(React.createElement(CancellationTemplate, { ...params, role: 'candidate' }));
 
-  const results = await Promise.all([
-    sendInvite({ 
-      to: params.interviewerEmail, 
-      subject: "CANCELLED: Interview Invitation", 
-      html: interviewerHtml,
-      from: EMAIL_FROM
-    }),
-    sendInvite({ 
-      to: params.candidateEmail, 
-      subject: "CANCELLED: Interview Invitation", 
-      html: candidateHtml,
-      from: EMAIL_FROM
-    })
-  ]);
+  const interviewerResult = await sendInvite({ 
+    to: params.interviewerEmail, 
+    subject: "CANCELLED: Interview Invitation", 
+    html: interviewerHtml,
+    from: EMAIL_FROM
+  });
 
-  const error = results.find(r => r.error);
-  return error ? error : { success: true };
+  if (interviewerResult.error) return interviewerResult;
+
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  const candidateResult = await sendInvite({ 
+    to: params.candidateEmail, 
+    subject: "CANCELLED: Interview Invitation", 
+    html: candidateHtml,
+    from: EMAIL_FROM
+  });
+
+  if (candidateResult.error) return candidateResult;
+  return { success: true };
 };
 
 
@@ -314,22 +321,25 @@ export const sendSecurityTerminationNotice = async (params) => {
   const interviewerHtml = await render(React.createElement(SecurityTerminationTemplate, { ...params, role: 'interviewer' }));
   const candidateHtml = await render(React.createElement(SecurityTerminationTemplate, { ...params, role: 'candidate' }));
 
-  const results = await Promise.all([
-    sendInvite({
-      to: params.interviewerEmail,
-      subject: "URGENT: Interview Terminated due to Security Violations",
-      html: interviewerHtml,
-      from: EMAIL_FROM
-    }),
-    sendInvite({
-      to: params.candidateEmail,
-      subject: "TERMINATED: Security Violation Policy Breach",
-      html: candidateHtml,
-      from: EMAIL_FROM
-    })
-  ]);
+  const interviewerResult = await sendInvite({
+    to: params.interviewerEmail,
+    subject: "URGENT: Interview Terminated due to Security Violations",
+    html: interviewerHtml,
+    from: EMAIL_FROM
+  });
 
-  const error = results.find(r => r.error);
-  return error ? error : { success: true };
+  if (interviewerResult.error) return interviewerResult;
+
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  const candidateResult = await sendInvite({
+    to: params.candidateEmail,
+    subject: "TERMINATED: Security Violation Policy Breach",
+    html: candidateHtml,
+    from: EMAIL_FROM
+  });
+
+  if (candidateResult.error) return candidateResult;
+  return { success: true };
 };
 
