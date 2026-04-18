@@ -40,6 +40,9 @@ function SessionPage() {
   const isInterviewer = session?.interviewer?.clerkId === user?.id;
   const isCandidate = session?.candidate?.clerkId === user?.id;
 
+  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
+  const [code, setCode] = useState("");
+
   // Guard to prevent duplicate join calls (React StrictMode mounts effects twice in dev)
   const hasJoinedRef = useRef(false);
   const socketRef = useRef(null);
@@ -51,6 +54,17 @@ function SessionPage() {
     isInterviewer,
     isCandidate
   );
+
+  // find the problem data based on session problem ID (from backend problem population)
+  const problemData = session?.problem
+    ? Object.values(PROBLEMS).find((p) => p.title === session.problem.title)
+    : null;
+
+  useEffect(() => {
+    if (problemData?.starterCode?.[selectedLanguage] && !code) {
+      setCode(problemData.starterCode[selectedLanguage]);
+    }
+  }, [problemData, selectedLanguage]);
 
   if (loadingSession) {
     return (
@@ -143,15 +157,6 @@ function SessionPage() {
       </div>
     );
   }
-
-  // find the problem data based on session problem ID (from backend problem population)
-  // Backend populates session.problem with { _id, title, ... }
-  const problemData = session?.problem
-    ? Object.values(PROBLEMS).find((p) => p.title === session.problem.title)
-    : null;
-
-  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
-  const [code, setCode] = useState(problemData?.starterCode?.[selectedLanguage] || "");
 
   // auto-join session based on token
   useEffect(() => {
