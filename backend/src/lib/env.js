@@ -26,5 +26,7 @@ export const ENV = {
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   GMAIL_USER: process.env.GMAIL_USER,
   GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD,
+  EMAIL_SERVICE: process.env.EMAIL_SERVICE || 'resend', // 'resend' or 'gmail'
+  EMAIL_FROM: process.env.EMAIL_FROM || 'GMRIT CodeSphere <onboarding@resend.dev>',
 };
 

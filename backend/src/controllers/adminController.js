@@ -3,6 +3,9 @@ import Session from "../models/Session.js";
 import Problem from "../models/Problem.js";
 import { clerkClient } from "@clerk/express";
 import { inngest } from "../lib/inngest.js";
+import { sendRoleNotice } from "../lib/email.js";
+import Notification from "../models/Notification.js";
+
 
 export const getAdminStats = async (req, res) => {
   try {
@@ -89,26 +92,25 @@ export const promoteToInterviewer = async (req, res) => {
       },
     });
 
-    // Offload via Inngest
-    await inngest.send({
-      name: "user/role-changed",
-      data: {
-        emailParams: {
-          userEmail: user.email,
-          userName: user.name,
-          roleType: "Interviewer",
-          action: "promoted"
-        },
-        notificationParams: {
-          userId: user._id,
-          type: "role_change",
-          title: "Promoted to Interviewer",
-          message: "Congratulations! You have been promoted to an Interviewer role."
-        }
-      }
+    // Direct Email Send
+    const emailResult = await sendRoleNotice({
+      userEmail: user.email,
+      userName: user.name,
+      roleType: "Interviewer",
+      action: "promoted"
+    });
+    console.log("Role Change Email Result (Promotion):", emailResult);
+
+    // Create Notification
+    await Notification.create({
+      userId: user._id,
+      type: "role_change",
+      title: "Promoted to Interviewer",
+      message: "Congratulations! You have been promoted to an Interviewer role."
     });
 
     res.json({ message: "User promoted to interviewer successfully", user });
+
   } catch (error) {
     console.error("Error promoting user:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -159,20 +161,25 @@ export const demoteInterviewer = async (req, res) => {
       },
     });
 
-    // Offload via Inngest
-    await inngest.send({
-      name: "user/role-changed",
-      data: {
-        emailParams: {
-          userEmail: user.email,
-          userName: user.name,
-          roleType: "Candidate",
-          action: "demoted"
-        }
-      }
+    // Direct Email Send
+    const emailResult = await sendRoleNotice({
+      userEmail: user.email,
+      userName: user.name,
+      roleType: "Candidate",
+      action: "demoted"
+    });
+    console.log("Role Change Email Result (Demotion):", emailResult);
+
+    // Create Notification
+    await Notification.create({
+      userId: user._id,
+      type: "role_change",
+      title: "Role Updated",
+      message: "Your account role has been updated to Candidate."
     });
 
     res.json({ message: "Interviewer successfully moved back to candidate", user });
+
   } catch (error) {
     console.error("Error demoting user:", error);
     res.status(500).json({ message: "Internal Server Error" });

@@ -5,7 +5,8 @@ import Problem from "../models/Problem.js";
 import crypto from "crypto";
 import { inngest } from "../lib/inngest.js";
 import { ENV } from "../lib/env.js";
-import { sendInterviewInvite, sendCancellationNotice, sendEmailOtp } from "../lib/email.js";
+import { sendInterviewInvite, sendCancellationNotice, sendEmailOtp, sendSecurityTerminationNotice } from "../lib/email.js";
+
 import Notification from "../models/Notification.js";
 
 export async function scheduleSession(req, res) {
@@ -177,9 +178,18 @@ export async function scheduleSession(req, res) {
       interviewerLink,
       candidateLink,
     });
-    console.log("Direct Send Result:", emailResult);
+
+    if (emailResult.error) {
+       console.error("Email Delivery Failed:", emailResult.error);
+       return res.status(207).json({ 
+         session, 
+         warning: "Session scheduled, but invitation emails failed to send.",
+         error: emailResult.error.message 
+       });
+    }
 
     // Create Notifications
+
     await Notification.insertMany([
       {
         userId: interviewerDoc._id,
@@ -449,34 +459,34 @@ export async function cancelSession(req, res) {
     const problemDoc = await Problem.findById(session.problem);
 
     if (interviewerDoc && candidateDoc && problemDoc) {
-      await inngest.send({
-        name: "session/cancelled",
-        data: {
-          params: {
-            interviewerEmail: interviewerDoc.email,
-            interviewerName: interviewerDoc.name,
-            candidateEmail: candidateDoc.email,
-            candidateName: candidateDoc.name,
-            problemTitle: problemDoc.title,
-            scheduledAt: session.scheduledAt,
-          },
-          notifications: [
-            {
-              userId: interviewerDoc._id,
-              type: "session_cancelled",
-              title: "Interview Cancelled",
-              message: `The interview with ${candidateDoc.name} for "${problemDoc.title}" has been cancelled.`
-            },
-            {
-              userId: candidateDoc._id,
-              type: "session_cancelled",
-              title: "Interview Cancelled",
-              message: `Your interview with ${interviewerDoc.name} for "${problemDoc.title}" has been cancelled.`
-            }
-          ]
-        }
+      // Direct Email Send
+      const emailResult = await sendCancellationNotice({
+        interviewerEmail: interviewerDoc.email,
+        interviewerName: interviewerDoc.name,
+        candidateEmail: candidateDoc.email,
+        candidateName: candidateDoc.name,
+        problemTitle: problemDoc.title,
+        scheduledAt: session.scheduledAt,
       });
+      console.log("Cancellation Email Result:", emailResult);
+
+      // Create Notifications
+      await Notification.insertMany([
+        {
+          userId: interviewerDoc._id,
+          type: "session_cancelled",
+          title: "Interview Cancelled",
+          message: `The interview with ${candidateDoc.name} for "${problemDoc.title}" has been cancelled.`
+        },
+        {
+          userId: candidateDoc._id,
+          type: "session_cancelled",
+          title: "Interview Cancelled",
+          message: `Your interview with ${interviewerDoc.name} for "${problemDoc.title}" has been cancelled.`
+        }
+      ]);
     }
+
 
     res.status(200).json({ session, message: "Session cancelled successfully" });
   } catch (error) {
@@ -699,32 +709,32 @@ export async function terminateByViolation(req, res) {
 
     // Offload via Inngest
 
-    await inngest.send({
-      name: "session/terminated",
-      data: {
-        params: {
-          interviewerEmail: session.interviewer.email,
-          interviewerName: session.interviewer.name,
-          candidateEmail: session.candidate.email,
-          candidateName: session.candidate.name,
-          reason: session.terminationReason
-        },
-        notifications: [
-          {
-            userId: session.interviewer._id,
-            type: "session_terminated",
-            title: "Session Terminated: Security",
-            message: `The session with ${session.candidate.name} was terminated for: ${session.terminationReason}`
-          },
-          {
-            userId: session.candidate._id,
-            type: "session_terminated",
-            title: "Policy Breach: Terminated",
-            message: "Your interview was terminated due to security violations. A report has been sent to the admin."
-          }
-        ]
-      }
+    // Direct Email Send
+    const emailResult = await sendSecurityTerminationNotice({
+      interviewerEmail: session.interviewer.email,
+      interviewerName: session.interviewer.name,
+      candidateEmail: session.candidate.email,
+      candidateName: session.candidate.name,
+      reason: session.terminationReason
     });
+    console.log("Security Termination Email Result:", emailResult);
+
+    // Create Notifications
+    await Notification.insertMany([
+      {
+        userId: session.interviewer._id,
+        type: "session_terminated",
+        title: "Session Terminated: Security",
+        message: `The session with ${session.candidate.name} was terminated for: ${session.terminationReason}`
+      },
+      {
+        userId: session.candidate._id,
+        type: "session_terminated",
+        title: "Policy Breach: Terminated",
+        message: "Your interview was terminated due to security violations. A report has been sent to the admin."
+      }
+    ]);
+
 
     res.status(200).json({ message: "Session terminated due to security violations", status: "terminated" });
   } catch (error) {
