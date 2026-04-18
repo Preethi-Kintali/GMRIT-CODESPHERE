@@ -1,4 +1,6 @@
+// Production Build Heartbeat: 2026-04-18
 import { useUser } from "@clerk/clerk-react";
+
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { io } from "socket.io-client";
