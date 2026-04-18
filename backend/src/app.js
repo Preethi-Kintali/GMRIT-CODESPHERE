@@ -28,7 +28,8 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 
 const PORT = ENV.PORT;
 const app = express();
-app.set("trust proxy", 1);
+app.set("trust proxy", true);
+
 
 const server = http.createServer(app);
 const io = new Server(server, {
