@@ -9,7 +9,7 @@ import Notification from "../models/Notification.js";
 
 export const getAdminStats = async (req, res) => {
   try {
-    const activeSessions = await Session.countDocuments({ status: "active" });
+    const activeSessions = await Session.countDocuments({ status: { $in: ["active", "scheduled"] } });
     const totalInterviewers = await User.countDocuments({ role: "interviewer" });
     
     // Count candidates created today

@@ -228,6 +228,7 @@ export async function getActiveSessions(req, res) {
       .populate("problem", "title difficulty")
       .sort({ scheduledAt: 1 });
 
+    console.log(`🔍 [Session Discovery] Found ${sessions.length} sessions for user ${userId} (Role: ${req.user.role})`);
     res.status(200).json({ sessions });
   } catch (error) {
     console.error("Error in getActiveSessions:", error);

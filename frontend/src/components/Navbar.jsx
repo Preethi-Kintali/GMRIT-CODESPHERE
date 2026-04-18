@@ -85,7 +85,7 @@ function Navbar({ children }) {
             <Link
               to={"/admin"}
               className={`px-3 py-2 flex items-center gap-2 rounded-md transition-colors text-sm font-medium
-                \${
+                ${
                   location.pathname.startsWith("/admin")
                     ? "bg-purple-500/10 text-purple-400"
                     : "text-neutral-400 hover:text-white hover:bg-white/5"

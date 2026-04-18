@@ -41,9 +41,10 @@ function DashboardPage() {
     );
   };
 
-  if (!loadingProfile && profileData?.user && !profileData.user.hasCompletedProfile) {
-    return <Navigate to="/profile" replace />;
-  }
+  // Profile completion redirect removed per user request
+  // if (!loadingProfile && profileData?.user && !profileData.user.hasCompletedProfile) {
+  //   return <Navigate to="/profile" replace />;
+  // }
 
   return (
     <>

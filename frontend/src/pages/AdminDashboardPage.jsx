@@ -21,6 +21,7 @@ export default function AdminDashboardPage() {
       const res = await axiosInstance.get("/admin/sessions");
       return res.data;
     },
+    refetchInterval: 10000, // Refresh every 10 seconds for real-time visibility
   });
 
   const cancelSessionMutation = useMutation({
