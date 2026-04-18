@@ -5,9 +5,7 @@ import { ENV } from './env.js';
 const resend = new Resend(ENV.RESEND_API_KEY);
 
 const gmailTransporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  service: 'gmail',
   auth: {
     user: ENV.GMAIL_USER,
     pass: ENV.GMAIL_APP_PASSWORD,
@@ -19,17 +17,26 @@ const gmailTransporter = nodemailer.createTransport({
  * Supports 'resend' and 'gmail' strategies
  */
 export async function sendInvite({ to, subject, html, from }) {
-  const strategy = ENV.EMAIL_SERVICE || 'resend';
+  const primaryStrategy = ENV.EMAIL_SERVICE || 'resend';
   const sender = from || ENV.EMAIL_FROM;
 
-  if (strategy === 'resend') {
-    return await sendWithResend({ to, subject, html, from: sender });
-  } else if (strategy === 'gmail') {
-    return await sendWithGmail({ to, subject, html, from: sender });
+  console.log(`📡 Dispatching email to ${to} using ${primaryStrategy}...`);
+
+  let result;
+  if (primaryStrategy === 'resend') {
+    result = await sendWithResend({ to, subject, html, from: sender });
   } else {
-    console.error(`❌ Unknown email strategy: ${strategy}`);
-    return { error: 'Invalid configuration' };
+    result = await sendWithGmail({ to, subject, html, from: sender });
   }
+
+  // Automatic Fallback Strategy:
+  // If Resend (primary) fails and Gmail is configured, try Gmail as a backup.
+  if (result.error && primaryStrategy === 'resend' && ENV.GMAIL_USER && ENV.GMAIL_APP_PASSWORD) {
+    console.warn(`⚠️ Primary (Resend) failed for ${to}. Attempting fallback to Gmail...`);
+    result = await sendWithGmail({ to, subject, html, from: sender });
+  }
+
+  return result;
 }
 
 async function sendWithResend({ to, subject, html, from }) {
