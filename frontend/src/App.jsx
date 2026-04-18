@@ -35,6 +35,18 @@ function ScrollToTop() {
 
 import { useParams } from "react-router";
 
+function SmartCatchAllRoute() {
+  const location = useLocation();
+  const path = location.pathname.replace(/^\/+/, "");
+  const potentialId = path.split('/')[0];
+  
+  if (/^[0-9a-fA-F]{24}$/.test(potentialId)) {
+    return <Navigate to={`/session/${path}${location.search}`} replace />;
+  }
+  
+  return <NotFoundPage />;
+}
+
 function SessionPluralRedirect() {
   const { id } = useParams();
   return <Navigate to={`/session/${id}`} replace />;
@@ -182,7 +194,7 @@ function App() {
             </AdminRoute>
           }
         />
-        <Route path="*" element={<NotFoundPage />} />
+        <Route path="*" element={<SmartCatchAllRoute />} />
       </Routes>
 
 
