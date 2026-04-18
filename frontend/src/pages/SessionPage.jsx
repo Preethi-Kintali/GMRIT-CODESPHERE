@@ -66,6 +66,121 @@ function SessionPage() {
     }
   }, [problemData, selectedLanguage]);
 
+  // auto-join session based on token
+  useEffect(() => {
+    if (!session || !user || loadingSession) return;
+    if (hasJoinedRef.current) return; // idempotency guard
+
+    // Both parties can join by identity or by token
+    if (isInterviewer || isCandidate || token) {
+      hasJoinedRef.current = true;
+      joinSessionMutation.mutate({ id, token }, { onSuccess: refetch });
+    }
+  }, [session, user, loadingSession, id, token, isInterviewer, isCandidate, joinSessionMutation, refetch]);
+
+  // redirect the "candidate" when session ends
+  useEffect(() => {
+    if (!session || loadingSession) return;
+
+    if (session.status === "completed") {
+      if (isCandidate) navigate(`/session/${id}/feedback/candidate`);
+      else navigate("/dashboard");
+    }
+  }, [session, loadingSession, navigate, isCandidate, id]);
+
+  // Security: Monitoring (Fullscreen & Tab Switch)
+  useEffect(() => {
+    if (!session || !isCandidate || session.status !== "active") return;
+
+    const recordSecurityViolation = async (type, message) => {
+      try {
+        const { violationCount } = await import("../api/sessions").then(m => m.sessionApi.recordViolation({ id, type, message }));
+        
+        if (violationCount >= 3) {
+          await import("../api/sessions").then(m => m.sessionApi.terminateByViolation({ 
+            id, 
+            reason: "Automatic Termination: Security Policy Breach (More than 3 critical violations detected)." 
+          }));
+          toast.error("INTERVIEW TERMINATED: Multiple security violations detected.", { duration: 10000 });
+          refetch();
+        } else {
+          toast.error(`SECURITY ALERT: ${message}. Warning ${violationCount}/3`, { 
+            duration: 5000,
+            position: "top-center",
+            style: { background: '#ef4444', color: '#fff', fontWeight: 'bold' }
+          });
+        }
+
+        if (socketRef.current) {
+          socketRef.current.emit("security_event", { sessionId: id, type, message, violationCount });
+        }
+      } catch (err) {
+        console.error("Failed to record violation:", err);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) recordSecurityViolation("Tab Switch", "Candidate switched tabs or minimized window");
+    };
+
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        recordSecurityViolation("Fullscreen Exit", "Candidate exited fullscreen mode");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, [session, isCandidate, id, refetch]);
+
+  // sync incoming code changes via Socket.io
+  useEffect(() => {
+    if (!session || !user || loadingSession) return;
+    
+    const backendUrl = import.meta.env.MODE === "development" ? "http://localhost:3000" : "/";
+    socketRef.current = io(backendUrl);
+    socketRef.current.emit("join_session", id);
+
+    socketRef.current.on("code_sync", (data) => {
+      if (data.code !== undefined) setCode(data.code);
+      if (data.language !== undefined) setSelectedLanguage(data.language);
+    });
+
+    socketRef.current.on("execution_start", () => {
+      setIsRunning(true);
+      setOutput(null);
+    });
+
+    socketRef.current.on("execution_result", ({ output }) => {
+      setOutput(output);
+      setIsRunning(false);
+    });
+    
+    socketRef.current.on("session_ended", () => {
+       toast.success("Session concluded by interviewer.");
+       refetch();
+    });
+
+    socketRef.current.on("session_terminated", ({ reason }) => {
+       toast.error(`TERMINATED: ${reason}`);
+       refetch();
+    });
+
+    socketRef.current.on("session_started", () => {
+       toast.success("Interview session is now LIVE!");
+       refetch();
+    });
+
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+    };
+  }, [session, user, loadingSession, id, refetch]);
+
   if (loadingSession) {
     return (
       <div className="h-screen bg-black flex flex-col items-center justify-center space-y-4">
@@ -158,81 +273,11 @@ function SessionPage() {
     );
   }
 
-  // auto-join session based on token
-  useEffect(() => {
-    if (!session || !user || loadingSession) return;
-    if (hasJoinedRef.current) return; // idempotency guard
-
-    // the host check previously bypass join, but now both parties MUST join to activate schedule -> active state!
-    // Both parties can join by identity or by token
-    if (isInterviewer || isCandidate || token) {
-      hasJoinedRef.current = true;
-      joinSessionMutation.mutate({ id, token }, { onSuccess: refetch });
-    }
-  }, [session, user, loadingSession, id, token]);
-
-  // redirect the "candidate" when session ends
-  useEffect(() => {
-    if (!session || loadingSession) return;
-
-    if (session.status === "completed") {
-      if (isCandidate) navigate(`/session/${id}/feedback/candidate`);
-      else navigate("/dashboard");
-    }
-  }, [session, loadingSession, navigate, isCandidate, id]);
 
   // Security: Restricted Devices Check (Block Mobiles & Tablets)
   const isRestrictedDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   // Security: Monitoring (Fullscreen & Tab Switch)
-  useEffect(() => {
-    if (!session || !isCandidate || session.status !== "active") return;
-
-    const recordSecurityViolation = async (type, message) => {
-      try {
-        const { violationCount } = await import("../api/sessions").then(m => m.sessionApi.recordViolation({ id, type, message }));
-        
-        if (violationCount >= 3) {
-          await import("../api/sessions").then(m => m.sessionApi.terminateByViolation({ 
-            id, 
-            reason: "Automatic Termination: Security Policy Breach (More than 3 critical violations detected)." 
-          }));
-          toast.error("INTERVIEW TERMINATED: Multiple security violations detected.", { duration: 10000 });
-          refetch();
-        } else {
-          toast.error(`SECURITY ALERT: ${message}. Warning ${violationCount}/3`, { 
-            duration: 5000,
-            position: "top-center",
-            style: { background: '#ef4444', color: '#fff', fontWeight: 'bold' }
-          });
-        }
-
-        if (socketRef.current) {
-          socketRef.current.emit("security_event", { sessionId: id, type, message, violationCount });
-        }
-      } catch (err) {
-        console.error("Failed to record violation:", err);
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) recordSecurityViolation("Tab Switch", "Candidate switched tabs or minimized window");
-    };
-
-    const handleFullscreenChange = () => {
-      if (!document.fullscreenElement) {
-        recordSecurityViolation("Fullscreen Exit", "Candidate exited fullscreen mode");
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
-  }, [session, isCandidate, id, refetch]);
 
   // Security: Auto-Fullscreen Logic
   const enterFullscreen = () => {
@@ -243,57 +288,6 @@ function SessionPage() {
     }
   };
 
-  // update code when problem loads or changes
-  useEffect(() => {
-    if (problemData?.starterCode?.[selectedLanguage]) {
-      setCode(problemData.starterCode[selectedLanguage]);
-    }
-  }, [problemData, selectedLanguage]);
-
-  // sync incoming code changes via Socket.io
-  useEffect(() => {
-    if (!session || !user || loadingSession) return;
-    
-    const backendUrl = import.meta.env.MODE === "development" ? "http://localhost:3000" : "/";
-    socketRef.current = io(backendUrl);
-    socketRef.current.emit("join_session", id);
-
-    socketRef.current.on("code_sync", (data) => {
-      if (data.code !== undefined) setCode(data.code);
-      if (data.language !== undefined) setSelectedLanguage(data.language);
-    });
-
-    socketRef.current.on("execution_start", () => {
-      setIsRunning(true);
-      setOutput(null);
-    });
-
-    socketRef.current.on("execution_result", ({ output }) => {
-      setOutput(output);
-      setIsRunning(false);
-    });
-    
-    socketRef.current.on("session_ended", () => {
-       toast.success("Session concluded by interviewer.");
-       refetch();
-       // Navigation happens via session.status useEffect
-    });
-
-    socketRef.current.on("session_terminated", ({ reason }) => {
-       toast.error(`TERMINATED: ${reason}`);
-       refetch();
-    });
-
-    socketRef.current.on("session_started", () => {
-       toast.success("Interview session is now LIVE!");
-       refetch();
-    });
-
-    return () => {
-
-      if (socketRef.current) socketRef.current.disconnect();
-    };
-  }, [session, user, loadingSession, id]);
 
   const handleCodeChange = (value) => {
     setCode(value);
