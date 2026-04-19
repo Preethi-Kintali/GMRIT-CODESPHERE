@@ -1,15 +1,40 @@
+import { useState } from "react";
 import { Code2Icon, Clock, Users, LoaderIcon, HistoryIcon } from "lucide-react";
 import { getDifficultyBadgeClass } from "../lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
 function RecentSessions({ sessions, isLoading }) {
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const filteredSessions = sessions?.filter((session) => {
+    if (statusFilter === "all") return true;
+    return session.status === statusFilter;
+  }) || [];
+
   return (
     <div className="mt-8 p-6 rounded-xl border border-white/10 bg-[#1e1e1e]">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="size-8 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center">
-          <HistoryIcon className="size-4 text-white" />
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <div className="size-8 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center">
+            <HistoryIcon className="size-4 text-white" />
+          </div>
+          <h2 className="text-xl font-semibold text-white tracking-tight">Past Sessions</h2>
         </div>
-        <h2 className="text-xl font-semibold text-white tracking-tight">Past Sessions</h2>
+        
+        <div className="flex items-center gap-2">
+            <span className="text-xs text-neutral-400 font-medium uppercase tracking-wider hidden sm:block">Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-black/40 border border-white/10 text-white text-sm rounded-lg focus:ring-white/20 focus:border-white/20 block p-2 custom-scrollbar outline-none"
+            >
+              <option value="all">All</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="active">Active</option>
+              <option value="scheduled">Scheduled</option>
+            </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -35,8 +60,8 @@ function RecentSessions({ sessions, isLoading }) {
               </div>
             ))}
           </>
-        ) : sessions.length > 0 ? (
-          sessions.map((session) => (
+        ) : filteredSessions.length > 0 ? (
+          filteredSessions.map((session) => (
             <div
               key={session._id}
               className={`relative p-5 rounded-xl border transition-colors group ${session.status === "active"

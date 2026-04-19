@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../lib/axios";
@@ -6,6 +7,7 @@ import toast from "react-hot-toast";
 
 export default function AdminDashboardPage() {
   const queryClient = useQueryClient();
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: stats, isLoading: isLoadingStats } = useQuery({
     queryKey: ["admin-stats"],
@@ -73,6 +75,11 @@ export default function AdminDashboardPage() {
       }
     });
   };
+
+  const filteredSessions = sessionsData?.sessions?.filter((session) => {
+    if (statusFilter === "all") return true;
+    return session.status === statusFilter;
+  });
 
   return (
     <div className="space-y-8 p-6 lg:p-8 mx-auto max-w-7xl">
@@ -144,11 +151,27 @@ export default function AdminDashboardPage() {
       )}
 
       <div className="p-6 rounded-xl border border-white/10 bg-[#1e1e1e] flex flex-col h-full mt-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="size-8 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center">
-            <ActivityIcon className="size-4 text-white" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="size-8 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center">
+              <ActivityIcon className="size-4 text-white" />
+            </div>
+            <h2 className="text-xl font-semibold text-white tracking-tight">All Sessions</h2>
           </div>
-          <h2 className="text-xl font-semibold text-white tracking-tight">All Sessions</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-neutral-400 font-medium uppercase tracking-wider">Status Filter:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-black/40 border border-white/10 text-white text-sm rounded-lg focus:ring-white/20 focus:border-white/20 block p-2 custom-scrollbar outline-none"
+            >
+              <option value="all">All</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
 
         <div className="rounded-xl border border-white/5 overflow-hidden">
@@ -170,7 +193,7 @@ export default function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 bg-black/40">
-                  {sessionsData?.sessions?.map((session) => (
+                  {filteredSessions?.map((session) => (
                     <tr key={session._id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-5 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-medium text-neutral-300 uppercase tracking-wider`}>
@@ -216,7 +239,7 @@ export default function AdminDashboardPage() {
                       </td>
                     </tr>
                   ))}
-                  {sessionsData?.sessions?.length === 0 && (
+                  {filteredSessions?.length === 0 && (
                     <tr>
                       <td colSpan="6" className="px-6 py-12 text-center">
                         <div className="flex flex-col items-center justify-center h-full text-center py-4">
