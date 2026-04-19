@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../lib/axios";
-import { LoaderIcon, Trash2, LayoutDashboardIcon, ActivityIcon, UsersIcon, TerminalSquareIcon, Code2Icon } from "lucide-react";
+import { LoaderIcon, Trash2, LayoutDashboardIcon, ActivityIcon, UsersIcon, TerminalSquareIcon, Code2Icon, FilterIcon } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function AdminDashboardPage() {
@@ -158,19 +158,21 @@ export default function AdminDashboardPage() {
             </div>
             <h2 className="text-xl font-semibold text-white tracking-tight">All Sessions</h2>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-neutral-400 font-medium uppercase tracking-wider">Status Filter:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-black/40 border border-white/10 text-white text-sm rounded-lg focus:ring-white/20 focus:border-white/20 block p-2 custom-scrollbar outline-none"
-            >
-              <option value="all">All</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="active">Active</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 border border-white/10 rounded-lg focus-within:border-white/20 transition-all group">
+              <FilterIcon className="size-3.5 text-neutral-500 group-hover:text-white transition-colors" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="bg-transparent text-white text-xs font-semibold uppercase tracking-wider outline-none cursor-pointer pr-2 appearance-none"
+              >
+                <option value="all" className="bg-[#1e1e1e]">Reset Filter</option>
+                <option value="scheduled" className="bg-[#1e1e1e]">Scheduled</option>
+                <option value="active" className="bg-[#1e1e1e]">Active</option>
+                <option value="completed" className="bg-[#1e1e1e]">Completed</option>
+                <option value="cancelled" className="bg-[#1e1e1e]">Cancelled</option>
+              </select>
+            </div>
           </div>
         </div>
 
