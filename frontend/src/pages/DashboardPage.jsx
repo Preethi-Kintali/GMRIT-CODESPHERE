@@ -1,4 +1,4 @@
-import { useNavigate, Navigate } from "react-router";
+import { useNavigate } from "react-router";
 import { useUser } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "../lib/axios";
@@ -41,9 +41,17 @@ function DashboardPage() {
     );
   };
 
-  // Profile completion redirect removed per user request
-  // if (!loadingProfile && profileData?.user && !profileData.user.hasCompletedProfile) {
-  //   return <Navigate to="/profile" replace />;
+  return (
+    <>
+      <div className="min-h-screen bg-black text-neutral-300 font-sans relative overflow-x-hidden">
+        <div className="fixed inset-0 mesh-gradient opacity-20 pointer-events-none z-0" />
+        <Navbar />
+        <WelcomeSection />
+
+        <div className="max-w-5xl mx-auto px-6 py-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <StatsCards
+              activeSessionsCount={activeSessions.length}
               recentSessionsCount={recentSessions.length}
             />
             <ActiveSessions
