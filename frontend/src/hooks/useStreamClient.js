@@ -74,15 +74,17 @@ function useStreamClient(session, loadingSession, isInterviewer, isCandidate) {
       // iife
       (async () => {
         try {
-          if (videoCall) await videoCall.leave();
-          if (chatClientInstance) await chatClientInstance.disconnectUser();
-          await disconnectStreamClient();
+          // We intentionally ONLY leave the call video channel.
+          // We DO NOT disconnect the global chatClient or streamClient here.
+          // Doing so causes a fatal race condition in React StrictMode/re-renders
+          // where the cleanup of the first render rips the socket out from under the second render.
+          if (videoCall) await videoCall.leave().catch(() => {});
         } catch (error) {
           console.error("Cleanup error:", error);
         }
       })();
     };
-  }, [session, loadingSession, isInterviewer, isCandidate]);
+  }, [session?._id, session?.callId, session?.status, loadingSession, isInterviewer, isCandidate]);
 
   return {
     streamClient,
