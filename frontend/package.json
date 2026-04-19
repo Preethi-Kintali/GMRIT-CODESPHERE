@@ -18,7 +18,6 @@
     "axios": "^1.12.2",
     "canvas-confetti": "^1.9.3",
     "date-fns": "^4.1.0",
-    "gmrit-codesphere": "file:..",
     "lucide-react": "^0.548.0",
     "prismjs": "^1.30.0",
     "react": "^19.1.1",

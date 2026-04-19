@@ -158,12 +158,15 @@ export default function SessionLobby({ session, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#09090b] flex items-center justify-center p-4">
-      <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-center animate-in fade-in zoom-in duration-500">
+    <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center p-4">
+      {/* BACKGROUND MESH */}
+      <div className="fixed inset-0 mesh-gradient opacity-60 pointer-events-none" />
+
+      <div className="relative max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-center animate-in fade-in zoom-in duration-700 z-10">
         
         {/* LEFT COLUMN: GUIDELINES & PEER STATUS */}
         <div className="hidden lg:flex flex-col gap-6">
-          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 backdrop-blur-xl">
+          <div className="p-8 rounded-3xl glass-card backdrop-blur-2xl">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
               <ShieldCheckIcon className="size-6 text-emerald-500" />
               Secure Gateway
@@ -194,8 +197,8 @@ export default function SessionLobby({ session, onSuccess }) {
 
         {/* RIGHT COLUMN: INTERACTIVE STEPS */}
         <div className="w-full">
-          <div className="p-8 rounded-3xl border border-white/10 bg-[#18181b] shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500" />
+          <div className="p-8 rounded-[32px] border border-white/10 bg-black/40 backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500/50 via-blue-500/50 to-purple-500/50 group-hover:from-emerald-500 group-hover:via-blue-500 group-hover:to-purple-500 transition-all duration-1000" />
             
             {step === "verification" && (
               <div className="animate-in slide-in-from-right-8 duration-300">
@@ -253,8 +256,8 @@ export default function SessionLobby({ session, onSuccess }) {
                    ))}
                 </div>
 
-                <button onClick={handleAcceptGuidelines} disabled={isAccepting} className="btn btn-primary w-full bg-blue-600 border-none">
-                  {isAccepting ? <Loader2Icon className="size-5 animate-spin" /> : "I Accept the Guidelines"}
+                <button onClick={handleAcceptGuidelines} disabled={isAccepting} className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-[0_0_30px_rgba(37,99,235,0.2)] flex items-center justify-center gap-2 w-full">
+                  {isAccepting ? <Loader2Icon className="size-5 animate-spin" /> : <>I Accept the Guidelines <ArrowRightIcon className="size-4" /></>}
                 </button>
               </div>
             )}
@@ -277,8 +280,8 @@ export default function SessionLobby({ session, onSuccess }) {
                   )}
                 </div>
 
-                <button onClick={handleCheckIn} disabled={isCheckingIn || !techReady.video} className="btn btn-primary w-full bg-purple-600 border-none">
-                  {isCheckingIn ? <Loader2Icon className="size-5 animate-spin" /> : "Check-in as Ready"}
+                <button onClick={handleCheckIn} disabled={isCheckingIn || !techReady.video} className="px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all shadow-[0_0_30px_rgba(147,51,234,0.2)] disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2 w-full">
+                  {isCheckingIn ? <Loader2Icon className="size-5 animate-spin" /> : <>Check-in as Ready <UserCheckIcon className="size-4" /></>}
                 </button>
               </div>
             )}

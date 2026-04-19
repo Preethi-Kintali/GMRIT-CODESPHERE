@@ -199,65 +199,67 @@ function SessionPage() {
 
   if (loadingSession || (isJoining && session?.status !== "scheduled")) {
     return (
-      <div className="h-screen bg-[#000000] flex flex-col font-sans overflow-hidden">
+      <div className="h-screen bg-black flex flex-col font-sans overflow-hidden">
         {/* Navbar Skeleton */}
-        <div className="h-16 border-b border-white/10 bg-[#111111] px-6 flex items-center justify-between shrink-0">
-           <div className="h-6 w-32 bg-white/10 animate-pulse rounded"></div>
+        <div className="h-16 border-b border-white/5 bg-black px-6 flex items-center justify-between shrink-0 glass">
+           <div className="h-6 w-40 bg-white/5 animate-pulse rounded-lg"></div>
            <div className="flex gap-4">
-              <div className="size-8 bg-white/10 animate-pulse rounded-full"></div>
+              <div className="size-8 bg-white/5 animate-pulse rounded-full"></div>
            </div>
         </div>
 
-        <div className="flex-1 p-4 flex gap-4">
+        <div className="flex-1 p-4 flex gap-4 overflow-hidden relative">
+          <div className="absolute inset-0 mesh-gradient opacity-30 pointer-events-none" />
+          
           {/* Left Panel Skeleton */}
-          <div className="flex-[0.35] bg-[#1e1e1e] rounded-xl border border-white/10 flex flex-col">
-             <div className="h-12 border-b border-white/10 bg-[#2d2d2d] flex items-center px-4">
-               <div className="h-6 w-24 bg-white/10 animate-pulse rounded"></div>
+          <div className="flex-[0.35] glass-card rounded-2xl flex flex-col animate-in fade-in slide-in-from-left-4 duration-1000">
+             <div className="h-12 border-b border-white/10 bg-white/[0.02] flex items-center px-4">
+               <div className="h-4 w-24 bg-white/10 animate-pulse rounded"></div>
              </div>
-             <div className="p-6 space-y-4">
-                <div className="h-8 w-3/4 bg-white/10 animate-pulse rounded"></div>
+             <div className="p-8 space-y-6">
+                <div className="h-10 w-3/4 bg-white/10 animate-pulse rounded-lg"></div>
                 <div className="flex gap-2">
-                   <div className="h-5 w-16 bg-white/5 animate-pulse rounded-full"></div>
-                   <div className="h-5 w-20 bg-white/5 animate-pulse rounded-full"></div>
+                   <div className="h-6 w-16 bg-white/10 animate-pulse rounded-full"></div>
+                   <div className="h-6 w-20 bg-white/10 animate-pulse rounded-full"></div>
                 </div>
-                <div className="space-y-3 mt-8">
-                   <div className="h-4 w-full bg-white/5 animate-pulse rounded"></div>
-                   <div className="h-4 w-5/6 bg-white/5 animate-pulse rounded"></div>
-                   <div className="h-4 w-4/6 bg-white/5 animate-pulse rounded"></div>
+                <div className="space-y-4 mt-10">
+                   <div className="h-3 w-full bg-white/5 animate-pulse rounded"></div>
+                   <div className="h-3 w-5/6 bg-white/5 animate-pulse rounded"></div>
+                   <div className="h-3 w-4/6 bg-white/5 animate-pulse rounded"></div>
                 </div>
              </div>
           </div>
 
           {/* Middle Panel Skeleton */}
-          <div className="flex-[0.4] flex flex-col gap-4">
-             <div className="flex-[0.65] bg-[#1e1e1e] rounded-xl border border-white/10 flex flex-col">
-                <div className="h-12 border-b border-white/10 bg-[#2d2d2d] flex items-center px-4 justify-between">
-                   <div className="h-6 w-32 bg-white/10 animate-pulse rounded"></div>
-                   <div className="h-6 w-20 bg-white/10 animate-pulse rounded"></div>
+          <div className="flex-[0.4] flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
+             <div className="flex-[0.65] glass-card rounded-2xl flex flex-col overflow-hidden">
+                <div className="h-12 border-b border-white/10 bg-white/[0.02] flex items-center px-4 justify-between">
+                   <div className="h-4 w-32 bg-white/10 animate-pulse rounded"></div>
+                   <div className="h-4 w-20 bg-white/10 animate-pulse rounded"></div>
                 </div>
-                <div className="flex-1 p-6 space-y-4">
-                   <div className="h-4 w-1/3 bg-white/5 animate-pulse rounded"></div>
-                   <div className="h-4 w-1/2 bg-white/5 animate-pulse rounded pl-4"></div>
-                   <div className="h-4 w-1/4 bg-white/5 animate-pulse rounded pl-4"></div>
-                   <div className="h-4 w-2/3 bg-white/5 animate-pulse rounded"></div>
+                <div className="flex-1 p-8 space-y-4">
+                   <div className="h-3 w-1/3 bg-white/10 animate-pulse rounded"></div>
+                   <div className="h-3 w-1/2 bg-white/10 animate-pulse rounded pl-4"></div>
+                   <div className="h-3 w-1/4 bg-white/10 animate-pulse rounded pl-4"></div>
+                   <div className="h-3 w-2/3 bg-white/10 animate-pulse rounded"></div>
                 </div>
              </div>
-             <div className="flex-[0.35] bg-[#1e1e1e] rounded-xl border border-white/10 flex flex-col">
-                <div className="h-10 border-b border-white/10 bg-[#2d2d2d] flex items-center px-4">
-                   <div className="h-5 w-20 bg-white/10 animate-pulse rounded"></div>
+             <div className="flex-[0.35] glass-card rounded-2xl flex flex-col overflow-hidden">
+                <div className="h-10 border-b border-white/10 bg-white/[0.02] flex items-center px-4">
+                   <div className="h-4 w-20 bg-white/10 animate-pulse rounded"></div>
                 </div>
-                <div className="flex-1 p-4">
-                   <div className="h-full w-full bg-white-[0.02] border border-white/5 rounded-lg animate-pulse"></div>
+                <div className="flex-1 p-6">
+                   <div className="h-full w-full bg-white/[0.02] border border-white/5 rounded-xl animate-pulse"></div>
                 </div>
              </div>
           </div>
 
           {/* Right Panel Skeleton */}
-          <div className="flex-[0.25] bg-[#1e1e1e] rounded-xl border border-white/10 flex flex-col">
-             <div className="h-full flex flex-col items-center justify-center p-8 gap-6">
-                <div className="size-24 rounded-full bg-white/5 animate-pulse"></div>
-                <div className="h-4 w-32 bg-white/5 animate-pulse rounded text-center"></div>
-                <div className="h-10 w-full bg-white/5 animate-pulse rounded-lg mt-8"></div>
+          <div className="flex-[0.25] glass-card rounded-2xl flex flex-col animate-in fade-in slide-in-from-right-4 duration-1000 delay-400">
+             <div className="h-full flex flex-col items-center justify-center p-8 gap-8">
+                <div className="size-32 rounded-3xl bg-white/5 animate-pulse rotate-6"></div>
+                <div className="h-4 w-40 bg-white/5 animate-pulse rounded-full text-center"></div>
+                <div className="h-12 w-full bg-white/5 animate-pulse rounded-xl mt-10"></div>
              </div>
           </div>
         </div>
@@ -518,11 +520,12 @@ function SessionPage() {
         )}
       </Navbar>
 
-      <div className={`flex-1 p-4 pb-6 ${isMobile ? 'overflow-y-auto h-auto min-h-[1500px]' : 'overflow-hidden min-h-0'}`}>
+      <div className={`flex-1 p-4 pb-6 ${isMobile ? 'overflow-y-auto h-auto min-h-[1500px]' : 'overflow-hidden min-h-0'} z-10 animate-in fade-in duration-700`}>
         <PanelGroup direction={isMobile ? "vertical" : "horizontal"}>
           {/* LEFT PANEL - PROBLEM DETAILS */}
           <Panel defaultSize={isMobile ? 33 : 35} minSize={20}>
-            <div className="h-full overflow-y-auto bg-[#1e1e1e] flex flex-col rounded-xl border border-white/10 custom-scrollbar">
+            <div className="h-full overflow-y-auto glass-card flex flex-col rounded-2xl custom-scrollbar shadow-2xl relative overflow-hidden">
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
               {/* HEADER TABS & SELECTOR */}
 
               <div className="flex items-center justify-between px-4 h-12 bg-[#2d2d2d] border-b border-white/10 shrink-0">
@@ -537,11 +540,13 @@ function SessionPage() {
                         navigator.clipboard.writeText(window.location.href);
                         setIsCopied(true);
                         setTimeout(() => setIsCopied(false), 2000);
+                        toast.success("Link copied to clipboard!");
                       }}
-                      className="px-2 py-1 bg-white/5 hover:bg-white/10 rounded flex items-center gap-1.5 border border-white/10 transition-colors text-[10px] uppercase font-semibold tracking-wider text-neutral-300"
+                      className={`px-3 py-1.5 rounded-lg flex items-center gap-2 border transition-all text-[10px] uppercase font-bold tracking-widest
+                        ${isCopied ? 'bg-emerald-500 border-emerald-500 text-black' : 'bg-white/5 hover:bg-white/10 border-white/10 text-neutral-300'}`}
                     >
-                      {isCopied ? <CheckIcon className="size-3 text-emerald-400" /> : <CopyIcon className="size-3" />}
-                      Link
+                      {isCopied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}
+                      {isCopied ? "Copied" : "Link"}
                     </button>
 
                     <div className="px-2 py-1 bg-white/5 rounded flex items-center gap-2 border border-white/10">
@@ -709,7 +714,7 @@ function SessionPage() {
 
           {/* RIGHT PANEL - VIDEO CALLS & CHAT */}
           <Panel defaultSize={isMobile ? 27 : 25} minSize={20}>
-            <div className="h-full bg-[#1e1e1e] flex flex-col rounded-xl overflow-hidden border border-white/10 overflow-auto">
+            <div className="h-full glass-card flex flex-col rounded-2xl overflow-hidden shadow-2xl">
               {isInitializingCall ? (
                 <div className="h-full flex items-center justify-center">
                   <div className="text-center">

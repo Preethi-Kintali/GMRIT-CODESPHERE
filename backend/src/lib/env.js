@@ -5,7 +5,8 @@ dotenv.config({ quiet: true });
 const requiredEnvVars = [
   "DB_URL",
   "STREAM_API_KEY",
-  "STREAM_API_SECRET"
+  "STREAM_API_SECRET",
+  "CLERK_SECRET_KEY"
 ];
 
 const missing = requiredEnvVars.filter(v => !process.env[v]);

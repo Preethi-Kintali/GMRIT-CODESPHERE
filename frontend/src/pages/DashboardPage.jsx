@@ -44,19 +44,6 @@ function DashboardPage() {
   // Profile completion redirect removed per user request
   // if (!loadingProfile && profileData?.user && !profileData.user.hasCompletedProfile) {
   //   return <Navigate to="/profile" replace />;
-  // }
-
-  return (
-    <>
-      <div className="min-h-screen bg-[#000000] text-neutral-300 font-sans">
-        <Navbar />
-        <WelcomeSection />
-
-        {/* Grid layout */}
-        <div className="max-w-5xl mx-auto px-6 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <StatsCards
-              activeSessionsCount={activeSessions.length}
               recentSessionsCount={recentSessions.length}
             />
             <ActiveSessions

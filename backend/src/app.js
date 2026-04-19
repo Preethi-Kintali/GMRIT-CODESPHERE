@@ -141,7 +141,12 @@ const startServer = async () => {
   try {
     await connectDB();
     server.listen(PORT, () => {
-      console.log(`server is running on port ${PORT}`);
+      console.log(`
+🚀 SERVER STATUS: ONLINE
+📡 Port: ${PORT}
+🌍 Environment: ${ENV.NODE_ENV}
+💻 Client URL: ${ENV.CLIENT_URL}
+      `);
       
       // Production Email Diagnostics
       if (ENV.GMAIL_USER && ENV.GMAIL_APP_PASSWORD) {
