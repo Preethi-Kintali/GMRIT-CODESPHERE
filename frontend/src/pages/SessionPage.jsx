@@ -48,6 +48,7 @@ function SessionPage() {
 
   // Guard to prevent duplicate join calls (React StrictMode mounts effects twice in dev)
   const hasJoinedRef = useRef(false);
+  const liveStateAppliedRef = useRef(false);
   const socketRef = useRef(null);
 
   // Note: we let streamClient hook know the roles as well
@@ -64,10 +65,20 @@ function SessionPage() {
     : null;
 
   useEffect(() => {
-    if (problemData?.starterCode?.[selectedLanguage] && !code) {
+    if (!session || loadingSession || liveStateAppliedRef.current) return;
+    
+    if (session.liveLanguage) {
+      setSelectedLanguage(session.liveLanguage);
+    }
+    
+    if (session.liveCode) {
+      setCode(session.liveCode);
+      liveStateAppliedRef.current = true;
+    } else if (problemData?.starterCode?.[selectedLanguage] && !code) {
+      // only if no live code exists do we set starter code
       setCode(problemData.starterCode[selectedLanguage]);
     }
-  }, [problemData, selectedLanguage]);
+  }, [session, problemData, loadingSession, selectedLanguage]);
 
   // auto-join session based on token
   useEffect(() => {
@@ -182,7 +193,7 @@ function SessionPage() {
     return () => {
       if (socketRef.current) socketRef.current.disconnect();
     };
-  }, [session, user, loadingSession, id, refetch]);
+  }, [session?._id, session?.status, user?.id, loadingSession, id, refetch]);
 
   const isJoining = joinSessionMutation.isPending;
 

@@ -24,6 +24,7 @@ import problemRoutes from "./routes/problemRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { errorMiddleware } from "./middleware/errorMiddleware.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import Session from "./models/Session.js";
 
 
 const PORT = ENV.PORT;
@@ -48,8 +49,18 @@ io.on("connection", (socket) => {
     socket.join(sessionId);
   });
 
-  socket.on("code_sync", ({ sessionId, code, language }) => {
+  socket.on("code_sync", async ({ sessionId, code, language }) => {
     socket.to(sessionId).emit("code_sync", { code, language });
+    
+    // Persist to DB for crash/refresh recovery
+    try {
+      await Session.findByIdAndUpdate(sessionId, { 
+        liveCode: code, 
+        liveLanguage: language 
+      });
+    } catch (err) {
+      console.error("Socket persistence error:", err);
+    }
   });
 
   socket.on("execution_start", ({ sessionId }) => {

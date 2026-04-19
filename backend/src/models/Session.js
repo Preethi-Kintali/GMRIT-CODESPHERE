@@ -68,6 +68,8 @@ const sessionSchema = new mongoose.Schema(
     candidateCheckedIn: { type: Boolean, default: false },
     interviewerCheckedInAt: { type: Date },
     candidateCheckedInAt: { type: Date },
+    liveCode: { type: String, default: "" },
+    liveLanguage: { type: String, default: "" },
     autoCompleted: { type: Boolean, default: false },
   },
 
