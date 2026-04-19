@@ -185,9 +185,68 @@ function SessionPage() {
 
   if (loadingSession) {
     return (
-      <div className="h-screen bg-black flex flex-col items-center justify-center space-y-4">
-        <Loader2Icon className="size-10 text-emerald-500 animate-spin" />
-        <p className="text-neutral-500 font-medium animate-pulse uppercase tracking-[0.2em] text-xs">Establishing Secure Link...</p>
+      <div className="h-screen bg-[#000000] flex flex-col font-sans overflow-hidden">
+        {/* Navbar Skeleton */}
+        <div className="h-16 border-b border-white/10 bg-[#111111] px-6 flex items-center justify-between shrink-0">
+           <div className="h-6 w-32 bg-white/10 animate-pulse rounded"></div>
+           <div className="flex gap-4">
+              <div className="size-8 bg-white/10 animate-pulse rounded-full"></div>
+           </div>
+        </div>
+
+        <div className="flex-1 p-4 flex gap-4">
+          {/* Left Panel Skeleton */}
+          <div className="flex-[0.35] bg-[#1e1e1e] rounded-xl border border-white/10 flex flex-col">
+             <div className="h-12 border-b border-white/10 bg-[#2d2d2d] flex items-center px-4">
+               <div className="h-6 w-24 bg-white/10 animate-pulse rounded"></div>
+             </div>
+             <div className="p-6 space-y-4">
+                <div className="h-8 w-3/4 bg-white/10 animate-pulse rounded"></div>
+                <div className="flex gap-2">
+                   <div className="h-5 w-16 bg-white/5 animate-pulse rounded-full"></div>
+                   <div className="h-5 w-20 bg-white/5 animate-pulse rounded-full"></div>
+                </div>
+                <div className="space-y-3 mt-8">
+                   <div className="h-4 w-full bg-white/5 animate-pulse rounded"></div>
+                   <div className="h-4 w-5/6 bg-white/5 animate-pulse rounded"></div>
+                   <div className="h-4 w-4/6 bg-white/5 animate-pulse rounded"></div>
+                </div>
+             </div>
+          </div>
+
+          {/* Middle Panel Skeleton */}
+          <div className="flex-[0.4] flex flex-col gap-4">
+             <div className="flex-[0.65] bg-[#1e1e1e] rounded-xl border border-white/10 flex flex-col">
+                <div className="h-12 border-b border-white/10 bg-[#2d2d2d] flex items-center px-4 justify-between">
+                   <div className="h-6 w-32 bg-white/10 animate-pulse rounded"></div>
+                   <div className="h-6 w-20 bg-white/10 animate-pulse rounded"></div>
+                </div>
+                <div className="flex-1 p-6 space-y-4">
+                   <div className="h-4 w-1/3 bg-white/5 animate-pulse rounded"></div>
+                   <div className="h-4 w-1/2 bg-white/5 animate-pulse rounded pl-4"></div>
+                   <div className="h-4 w-1/4 bg-white/5 animate-pulse rounded pl-4"></div>
+                   <div className="h-4 w-2/3 bg-white/5 animate-pulse rounded"></div>
+                </div>
+             </div>
+             <div className="flex-[0.35] bg-[#1e1e1e] rounded-xl border border-white/10 flex flex-col">
+                <div className="h-10 border-b border-white/10 bg-[#2d2d2d] flex items-center px-4">
+                   <div className="h-5 w-20 bg-white/10 animate-pulse rounded"></div>
+                </div>
+                <div className="flex-1 p-4">
+                   <div className="h-full w-full bg-white-[0.02] border border-white/5 rounded-lg animate-pulse"></div>
+                </div>
+             </div>
+          </div>
+
+          {/* Right Panel Skeleton */}
+          <div className="flex-[0.25] bg-[#1e1e1e] rounded-xl border border-white/10 flex flex-col">
+             <div className="h-full flex flex-col items-center justify-center p-8 gap-6">
+                <div className="size-24 rounded-full bg-white/5 animate-pulse"></div>
+                <div className="h-4 w-32 bg-white/5 animate-pulse rounded text-center"></div>
+                <div className="h-10 w-full bg-white/5 animate-pulse rounded-lg mt-8"></div>
+             </div>
+          </div>
+        </div>
       </div>
     );
   }

@@ -14,9 +14,27 @@ function RecentSessions({ sessions, isLoading }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading ? (
-          <div className="col-span-full flex items-center justify-center py-20">
-            <LoaderIcon className="size-6 animate-spin text-neutral-500" />
-          </div>
+          <>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-5 rounded-xl border border-white/5 bg-black/40 flex flex-col">
+                <div className="flex items-start gap-4 mb-5">
+                  <div className="size-10 rounded-lg bg-white/5 animate-pulse shrink-0"></div>
+                  <div className="space-y-2 flex-1 pt-1">
+                    <div className="h-4 w-3/4 bg-white/10 animate-pulse rounded-md"></div>
+                    <div className="h-3 w-1/3 bg-white/5 animate-pulse rounded-md"></div>
+                  </div>
+                </div>
+                <div className="space-y-2.5 mb-5 pl-14">
+                  <div className="h-3 w-1/2 bg-white/5 animate-pulse rounded-md"></div>
+                  <div className="h-3 w-1/3 bg-white/5 animate-pulse rounded-md"></div>
+                </div>
+                <div className="pt-4 border-t border-white/5 mt-auto flex justify-between items-center">
+                  <div className="h-3 w-12 bg-white/5 animate-pulse rounded-md"></div>
+                  <div className="h-3 w-20 bg-white/5 animate-pulse rounded-md"></div>
+                </div>
+              </div>
+            ))}
+          </>
         ) : sessions.length > 0 ? (
           sessions.map((session) => (
             <div

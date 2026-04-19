@@ -17,10 +17,34 @@ function ProblemsPage() {
 
   if (isLoading) {
      return (
-        <div className="min-h-screen bg-black">
+        <div className="min-h-screen bg-[#000000]">
            <Navbar />
-           <div className="flex items-center justify-center p-20">
-              <Loader2Icon className="size-10 text-emerald-500 animate-spin" />
+           <div className="max-w-5xl mx-auto px-6 py-16">
+              <div className="mb-12 space-y-3">
+                 <div className="h-8 w-64 bg-white/10 animate-pulse rounded-md"></div>
+                 <div className="h-4 w-96 bg-white/5 animate-pulse rounded-md"></div>
+              </div>
+              <div className="space-y-4">
+                 {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="p-6 rounded-2xl border border-white/5 bg-white/[0.02]">
+                       <div className="flex flex-col sm:flex-row gap-6">
+                          <div className="flex-1">
+                             <div className="flex items-start gap-4 mb-3">
+                                <div className="size-10 shrink-0 rounded-lg bg-white/10 animate-pulse"></div>
+                                <div className="flex-1 pt-0.5 space-y-2">
+                                   <div className="h-5 w-1/3 bg-white/10 animate-pulse rounded-md"></div>
+                                   <div className="h-3 w-1/4 bg-white/5 animate-pulse rounded-md"></div>
+                                </div>
+                             </div>
+                             <div className="space-y-2 pl-14 pt-1">
+                                <div className="h-3 w-full bg-white/5 animate-pulse rounded-md"></div>
+                                <div className="h-3 w-4/5 bg-white/5 animate-pulse rounded-md"></div>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 ))}
+              </div>
            </div>
         </div>
      );

@@ -32,8 +32,19 @@ function ActiveSessions({ sessions, isLoading, isUserInSession }) {
       {/* SESSIONS LIST */}
       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar flex-1">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full text-neutral-500">
-            <LoaderIcon className="size-6 animate-spin" />
+          <div className="flex flex-col gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-5 rounded-xl border border-white/5 bg-black/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="size-12 rounded-lg bg-white/5 animate-pulse shrink-0"></div>
+                  <div className="space-y-2 flex-1">
+                    <div className="h-5 w-1/2 bg-white/10 animate-pulse rounded-md"></div>
+                    <div className="h-3 w-1/3 bg-white/5 animate-pulse rounded-md"></div>
+                  </div>
+                </div>
+                <div className="h-8 w-24 bg-white/10 animate-pulse rounded-md shrink-0 mt-4 sm:mt-0"></div>
+              </div>
+            ))}
           </div>
         ) : sessions.length > 0 ? (
           sessions.map((session) => (
