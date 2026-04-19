@@ -1,4 +1,4 @@
-import { chatClient, streamClient } from "../lib/stream.js";
+import { chatClient, streamClient, upsertStreamUser } from "../lib/stream.js";
 import Session from "../models/Session.js";
 import User from "../models/User.js";
 import Problem from "../models/Problem.js";
@@ -312,6 +312,15 @@ export async function joinSession(req, res) {
 
     // 2. Resolve role based on Identity or Token
     if (sessionInterviewerId === userId && (!token || session.interviewerToken === token)) {
+      // Check 1-hour expiration for identity verification
+      if (session.isInterviewerVerified && session.interviewerVerifiedAt) {
+        const hoursSinceVerify = (Date.now() - session.interviewerVerifiedAt.getTime()) / (1000 * 60 * 60);
+        if (hoursSinceVerify > 1) {
+          session.isInterviewerVerified = false;
+          await session.save();
+        }
+      }
+
       if (!session.isInterviewerVerified) {
         return res.status(401).json({ 
           message: "Interviewer security verification required", 
@@ -320,6 +329,15 @@ export async function joinSession(req, res) {
       }
       isInterviewer = true;
     } else if (sessionCandidateId === userId && (!token || session.candidateToken === token)) {
+      // Check 1-hour expiration for identity verification
+      if (session.isVerified && session.candidateVerifiedAt) {
+        const hoursSinceVerify = (Date.now() - session.candidateVerifiedAt.getTime()) / (1000 * 60 * 60);
+        if (hoursSinceVerify > 1) {
+          session.isVerified = false;
+          await session.save();
+        }
+      }
+
       if (!session.isVerified) {
         return res.status(401).json({ 
           message: "Candidate security verification required", 
@@ -355,6 +373,17 @@ export async function joinSession(req, res) {
       }
     }
 
+
+    // Ensure the stream user exists BEFORE creating or joining a channel
+    try {
+      await upsertStreamUser({
+        id: clerkId,
+        name: req.user.name || "User",
+        image: req.user.profileImage || ""
+      });
+    } catch (upsertError) {
+      console.error("Stream upsert warning in joinSession:", upsertError);
+    }
 
     // Add user to the Stream chat channel
     const channel = chatClient.channel("messaging", session.callId, {
@@ -613,9 +642,11 @@ export async function verifySessionOtp(req, res) {
 
     if (isCandidate) {
       session.isVerified = true;
+      session.candidateVerifiedAt = new Date();
       session.candidateOtp = undefined;
     } else {
       session.isInterviewerVerified = true;
+      session.interviewerVerifiedAt = new Date();
       session.interviewerOtp = undefined;
     }
     

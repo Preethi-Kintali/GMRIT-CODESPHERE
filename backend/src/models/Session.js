@@ -46,6 +46,8 @@ const sessionSchema = new mongoose.Schema(
     },
     isVerified: { type: Boolean, default: false }, // for candidate
     isInterviewerVerified: { type: Boolean, default: false },
+    candidateVerifiedAt: { type: Date },
+    interviewerVerifiedAt: { type: Date },
     interviewerAcceptedGuidelines: { type: Boolean, default: false },
     candidateAcceptedGuidelines: { type: Boolean, default: false },
     violationCount: { type: Number, default: 0 },
