@@ -33,7 +33,7 @@ export default function CreateSessionPage() {
     const nowDecimal = now.getHours() + now.getMinutes() / 60;
 
     for (let h = 0; h <= 23; h++) {
-      for (let m = 0; m < 60; m += 30) {
+      for (let m = 0; m < 60; m += 5) {
          const startTimeDecimal = h + m / 60;
          const endTimeDecimal = startTimeDecimal + (formData.duration / 60);
 
