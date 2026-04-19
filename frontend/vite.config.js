@@ -8,11 +8,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ["react", "react-dom", "react-router"],
-          stream: ["@stream-io/video-react-sdk", "stream-chat"],
-          monaco: ["@monaco-editor/react"],
-          vendor: ["lucide-react", "date-fns"],
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("@stream-io") || id.includes("stream-chat")) return "stream";
+            if (id.includes("monaco-editor")) return "monaco";
+            if (id.includes("@clerk")) return "clerk";
+            return "vendor";
+          }
         },
       },
     },
