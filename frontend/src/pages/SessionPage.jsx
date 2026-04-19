@@ -4,6 +4,7 @@ import { useUser } from "@clerk/clerk-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { io } from "socket.io-client";
+import { sessionApi } from "../api/sessions";
 import { useEndSession, useJoinSession, useSessionById } from "../hooks/useSessions";
 import { PROBLEMS } from "../data/problems";
 import { executeCode } from "../lib/piston";
@@ -96,13 +97,13 @@ function SessionPage() {
 
     const recordSecurityViolation = async (type, message) => {
       try {
-        const { violationCount } = await import("../api/sessions").then(m => m.sessionApi.recordViolation({ id, type, message }));
+        const { violationCount } = await sessionApi.recordViolation({ id, type, message });
         
         if (violationCount >= 3) {
-          await import("../api/sessions").then(m => m.sessionApi.terminateByViolation({ 
+          await sessionApi.terminateByViolation({ 
             id, 
             reason: "Automatic Termination: Security Policy Breach (More than 3 critical violations detected)." 
-          }));
+          });
           toast.error("INTERVIEW TERMINATED: Multiple security violations detected.", { duration: 10000 });
           refetch();
         } else {
