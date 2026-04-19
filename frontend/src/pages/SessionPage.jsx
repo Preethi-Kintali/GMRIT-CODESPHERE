@@ -183,7 +183,9 @@ function SessionPage() {
     };
   }, [session, user, loadingSession, id, refetch]);
 
-  if (loadingSession) {
+  const isJoining = joinSessionMutation.isPending;
+
+  if (loadingSession || (isJoining && session?.status !== "scheduled")) {
     return (
       <div className="h-screen bg-[#000000] flex flex-col font-sans overflow-hidden">
         {/* Navbar Skeleton */}
@@ -269,6 +271,33 @@ function SessionPage() {
               <button 
                 onClick={() => navigate("/dashboard")} 
                 className="btn btn-outline btn-error px-10 rounded-full"
+              >
+                Return to Dashboard
+              </button>
+           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (session?.status === "cancelled") {
+    return (
+      <div className="h-screen bg-black flex flex-col items-center justify-center p-8 text-center">
+        <div className="max-w-md space-y-8 animate-in fade-in zoom-in duration-700">
+           <div className="size-24 bg-red-600/10 border border-red-600/30 rounded-3xl flex items-center justify-center mx-auto mb-4 scale-110 shadow-[0_0_50px_rgba(220,38,38,0.1)]">
+              <PhoneOffIcon className="size-12 text-red-500" />
+           </div>
+           <div className="space-y-2">
+              <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Session Cancelled</h1>
+              <div className="badge badge-error gap-2 font-bold px-4 py-3">Interview Cancelled</div>
+           </div>
+           <p className="text-neutral-400 text-sm bg-red-950/20 p-5 rounded-2xl border border-red-900/20">
+              This interview has been cancelled and is no longer accessible.
+           </p>
+           <div className="pt-6">
+              <button 
+                onClick={() => navigate("/dashboard")} 
+                className="btn btn-outline btn-error px-10 rounded-full hover:scale-105 active:scale-95 transition-transform"
               >
                 Return to Dashboard
               </button>

@@ -20,7 +20,7 @@ function useStreamClient(session, loadingSession, isInterviewer, isCandidate) {
         setIsInitializingCall(false);
         return;
       }
-      if (session.status === "completed" || session.status === "scheduled") {
+      if (session.status !== "active") {
         setIsInitializingCall(false);
         return;
       }
