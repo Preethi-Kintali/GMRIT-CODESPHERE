@@ -28,7 +28,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 
 const PORT = ENV.PORT;
 const app = express();
-app.set("trust proxy", true);
+app.set("trust proxy", 1); // Specific number required by express-rate-limit instead of 'true'
 
 
 const server = http.createServer(app);
