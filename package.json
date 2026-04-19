@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DineshJammu/GMRIT-CODESPHERE.git"
+    "url": "git+https://github.com/Preethi-Kintali/GMRIT-CODESPHERE.git"
   },
   "engines": {
     "node": ">=22.0.0"

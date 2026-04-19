@@ -25,24 +25,19 @@ export default function CreateSessionPage() {
     if (!date) return [];
     
     const [y, m, d] = date.split('-');
-    const dayOfWeek = new Date(y, m - 1, d).getDay();
-    if (dayOfWeek === 0) return []; // Fast early-return constraint
+    // Sunday restriction removed
 
     const slots = [];
     const isToday = date === todayStr;
     const now = new Date();
     const nowDecimal = now.getHours() + now.getMinutes() / 60;
 
-    for (let h = 9; h <= 20; h++) {
+    for (let h = 0; h <= 23; h++) {
       for (let m = 0; m < 60; m += 30) {
          const startTimeDecimal = h + m / 60;
          const endTimeDecimal = startTimeDecimal + (formData.duration / 60);
 
-         // Bounds
-         if (startTimeDecimal < 9 || endTimeDecimal > 21) continue;
-
-         // Lunch (13:00 to 14:30) (1:00 PM to 2:30 PM)
-         if (startTimeDecimal < 14.5 && endTimeDecimal > 13) continue;
+         // Lunch and Bounds restrictions removed (allowing full 24h)
 
          // Past Time Check
          if (isToday && startTimeDecimal < nowDecimal) continue;
@@ -104,32 +99,14 @@ export default function CreateSessionPage() {
     const selectedDate = new Date(localDateTimeString);
     const now = new Date();
 
-    if (selectedDate.getDay() === 0) {
-      toast.error("Interviews cannot be scheduled on Sundays.");
-      return;
-    }
+    // Sunday restriction removed
     
     if (selectedDate < now) {
       toast.error("Cannot schedule interviews in the past.");
       return;
     }
     
-    // Validate 9 AM to 9 PM working bounds
-    const startHour = selectedDate.getHours();
-    const startMin = selectedDate.getMinutes();
-    const startTimeDecimal = startHour + startMin / 60;
-    const endTimeDecimal = startTimeDecimal + (formData.duration / 60);
-
-    if (startTimeDecimal < 9 || endTimeDecimal > 21) {
-      toast.error(`Sessions must be strictly within 9:00 AM and 9:00 PM. (Selected slot ends at ${Math.floor(endTimeDecimal)}:${(endTimeDecimal % 1 * 60).toString().padStart(2, '0')})`);
-      return;
-    }
-
-    // Validate 1:00 PM to 2:30 PM Lunch Block Overlay
-    if (startTimeDecimal < 14.5 && endTimeDecimal > 13) {
-      toast.error("Interviews cannot overlap with the 1:00 PM to 2:30 PM lunch break.");
-      return;
-    }
+    // 9 AM to 9 PM and Lunch block validations removed
 
     const scheduledAt = selectedDate.toISOString();
     const timezoneOffset = new Date().getTimezoneOffset();
@@ -173,20 +150,6 @@ export default function CreateSessionPage() {
         </div>
       </div>
 
-      <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex gap-3 items-start">
-        <ClockIcon className="size-5 text-blue-400 mt-0.5 shrink-0" />
-        <div className="text-sm text-blue-200/80 leading-relaxed">
-          <p className="font-semibold text-blue-300 mb-1">Scheduling Policy:</p>
-          <ul className="list-disc list-inside space-y-1">
-            <li>Interviews are available from <strong>9:00 AM to 9:00 PM</strong>.</li>
-            <li>Working days: <strong>Monday to Saturday</strong> (Closed on Sundays).</li>
-            <li><strong>Lunch Break:</strong> 1:00 PM to 2:30 PM (Unavailable)</li>
-            <li><strong>Maximum Limit:</strong> 2 interviews per day (Morning + Afternoon limit).</li>
-            <li><strong>Required Gap:</strong> Minimum 1.5 hours between two same-day sessions.</li>
-            <li>No overlapping sessions allowed for either participant.</li>
-          </ul>
-        </div>
-      </div>
 
       <div className="p-6 md:p-8 rounded-xl border border-white/10 bg-[#1e1e1e]">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -264,7 +227,7 @@ export default function CreateSessionPage() {
                   className="w-full pl-11 pr-10 py-3 bg-black/40 border border-white/10 group-hover:border-white/20 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all appearance-none [color-scheme:dark] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="" className="bg-[#1e1e1e] text-neutral-400">
-                    {!date ? "Select a date first" : (date && new Date(date.split('-')[0], date.split('-')[1] - 1, date.split('-')[2]).getDay() === 0 ? "Unavailable on Sundays" : (availableTimeSlots.length === 0 ? "No slots available" : "Pick a time"))}
+                    {!date ? "Select a date first" : (availableTimeSlots.length === 0 ? "No slots available" : "Pick a time")}
                   </option>
                   {availableTimeSlots.map((slot) => (
                     <option key={slot.value} value={slot.value} className="bg-[#1e1e1e] text-white">
